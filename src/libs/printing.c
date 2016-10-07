@@ -52,9 +52,8 @@ void printToOutputError(char* message, struct sockaddr_in clientAddr)
 void printBanner()
 {
     printf("------------------------------------------------\n");
-    printf("|         HTTPD server for tsam course         |\n");
+    printf("|      OpenSSL chat server for tsam course     |\n");
     printf("|   Authors:                                   |\n");
-    printf("|   Arnar Bjarni Arnarsson  <arnara14@ru.is>   |\n");
     printf("|   Hlynur Hansen           <hlynur14@ru.is>   |\n");
     printf("------------------------------------------------\n");
 }

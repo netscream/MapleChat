@@ -10,4 +10,5 @@ void printToOutputSendHeader(char* header, int oneIfFromClient, struct sockaddr_
 void printToOutputError(char* message, struct sockaddr_in clientAddr);
 void printBanner();
 void getHeaderTime(char* buffer, int mode);
+
 #endif

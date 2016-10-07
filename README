@@ -1,1 +1,170 @@
-Update this.
+Readme for openssl chat server v0.1 *Still in alpha*
+
+  *Table of contents*
+
+1 => About application
+	|- info about this application
+2 => Usage
+	|- how to use this application
+3 => Implement description
+	|- Description about how the server is implemented
+4 => File tree
+	|- File tree and comments about each file
+5 => Comments
+	|- Other comments about application
+6 => Version History
+	|- Version history for implemented features
+7 => Implementation of problems
+	|- 1)
+	|- 2)
+	|- 3)
+	|- 4)
+	|- 5)
+	|- 6)
+		|- 6.1
+		|- 6.2
+	|- 7)
+		|- 7.1
+		|- 7.2
+	|- 8)
+		|- 8.1
+		|- 8.2
+	|- 9)
+		|- 9.1
+		|- 9.2
+	|- 10)
+---------------------------------------------------------------
+1 => About application
+
+
+---------------------------------------------------------------
+2 => Usage
+
+./httpd [PORT]
+
+[PORT] - port number that is not in use on this system
+
+For developement:
+	$ make                (Will compile the server)
+	$ make & make install (Will compile the server and install) (*needs evelated priveledges* **root access in most cases**)
+	$ make distclean	  (Will clean all compiled .o and application files)
+
+---------------------------------------------------------------
+3 => Implement description
+
+httpd.c: 
+	
+--------------------------
+server.c: (server.h)
+	runServer():
+		Runs the server in infinit loop and waits for connection to socket.
+		when a message is received from socket it returns it to decodeMessage().
+
+	
+--------------------------
+printing.c: (printing.h)
+	printToOutput():
+		Prints input message to the stdout, put concats a timestamp to the output.
+
+	printToOutputSendHeader():
+		Prints to stdout the request header from client
+
+	printToOutputError():
+		Prints to the stdout all error messages that are sent to client, that is opcode error.
+
+	printBanner():
+		Only prints the beutyful banner on start, *So pretty*
+
+	getHeaderTime():
+		Gets the time as a string for header sending.
+--------------------------
+debugging.c: (debugging.h)  // note this is only for debugging the applictaion.
+	// to be able to use these functions please change the "#define debug" macro inside debugging.h to 1 etc. (#define debug 1)
+
+	printTime():
+		Function that only prints out the exact server time to the output (note: SERVER TIME)
+
+	debugS():
+		For writing strings to the output from other functions, concats the timestamp and "[DEBUG]" to the output so the user knows what info is what info.
+
+	debugD():
+		For writing strings with integer values to the stdout, concats timestamp and "[DEBUG]" to the string.
+
+	debugSockAddr():
+		for sockaddr and sockaddr_in debugging
+
+	debugMessage():
+		for debugging packages sent over the socket.
+
+---------------------------------------------------------------
+4 =>File tree for pa3 folder
+.
+├── AUTHORS		*List of authors*
+├── getpasswd.c
+├── pa3.pdf		*PDF file for project, about implementation*
+├── README		*THIS FILE!!*
+└── src			*src folder*
+    ├── chat.c
+    ├── chatd.c
+    ├── getpasswd.c
+    ├── libs		*Library folder*
+    │   ├── debugging.c	*Debugging c file*
+    │   ├── debugging.h *Debugging header file*
+    │   ├── printing.c	*Printing c file*
+    │   ├── printing.h	*Printing header file*
+    │   ├── server.c	*Server c file*
+    │   └── server.h	*Server header file*
+    └── Makefile	*Makefile for the server application*
+
+---------------------------------------------------------------
+5 => Comments
+We will use RSA for key generate
+=> openssl rsa -text -in fd.key
+Passphrase for Openssl private key = fool
+
+Certificate request values (CSR)
+=> openssl req -new -key fd.key -out fd.csr
+Country Name (2 letter code) [XX]:IS
+State or Province Name (full name) []:
+Locality Name (eg, city) [Default City]:Reykjavik
+Organization Name (eg, company) [Default Company Ltd]:Foo inc
+Organizational Unit Name (eg, section) []:.
+Common Name (eg, your name or your server's hostname) []:tolvur.net
+Email Address []:hlynur@tolvur.net
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:fool
+An optional company name []:.
+
+Creating certificate
+=> openssl x509 -req -days 365 -in fd.csr -signkey fd.key -out fd.crt
+************* Certificate creation is now done *******************
+Not so much security choosing the same password for the key and the 
+challange password.
+******************************************************************
+
+---------------------------------------------------------------
+6 => Version History
+
+---------------------------------------------------------------
+7 => Implementation of problems
+	|- 1) *DONE* 
+		See comment section for implementation
+	|- 2)
+	|- 3)
+	|- 4)
+	|- 5)
+	|- 6)
+		|- 6.1
+		|- 6.2
+	|- 7)
+		|- 7.1
+		|- 7.2
+	|- 8)
+		|- 8.1
+		|- 8.2
+	|- 9)
+		|- 9.1
+		|- 9.2
+	|- 10)
