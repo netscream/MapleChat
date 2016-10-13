@@ -18,21 +18,33 @@
 
 #include "debugging.h"
 #include "printing.h"
-
+#define LOGFILE "./chatd.log"
 /* Openssl definations */
 #define OPENSSL_SERVER_CERT "cert/fd.crt"
 #define OPEN_SSL_SERVER_KEY "cert/fd.key"
 /* End of openssl definations */
 /* Gtrees for implementation*/
+GTree *connectionList;
 GTree *roomsOnServerList;
 GTree *usersOnServerList;
-GTree *authUserList;
 /* end of grees for implementation*/
-/* Structures to be used for trees */
-/* end of structures for the trees */
+/* Structures to be used for users */
+struct userInformation {
+	SSL *sslFd;
+	int fd;
+	char *username;
+	char *nickname;
+	char *roomname;
+	int countLogins;
+	time_t logintTimeout;
+};
+typedef struct userInformation UserI;
+/* end of structures for the users */
 int runServer(int PortNum);
 int initalizeServer(int PortNum, struct sockaddr_in server);
 void initializeOpenSSLCert(SSL_CTX *theSSLctx);
 int sockaddr_in_cmp(const void *addr1, const void *addr2);
 gint fd_cmp(gconstpointer fd1,  gconstpointer fd2, gpointer G_GNUC_UNUSED data);
+void logger(struct sockaddr_in *client, int type);
+void initializeUserStruct(struct userInformation *newUser);
 #endif

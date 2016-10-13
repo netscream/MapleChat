@@ -64,7 +64,7 @@ void debugSockAddr(char* message, struct sockaddr_in clientAddr)
         printTime();
         fprintf(stdout, "[Debug] %s %s\n", message, inet_ntop(AF_INET, &(clientAddr.sin_addr), clBugg, len));
         printTime();
-        if (message[0] == 'S')
+        if (message[0] == 'S' || message[0] == 's')
         {
             printf("[Debug] Server port = %d\n", ntohs(clientAddr.sin_port));
         }

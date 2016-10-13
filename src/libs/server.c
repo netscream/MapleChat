@@ -1,6 +1,5 @@
 #include "server.h"
 
-
 /*
  * Function runServer
  * The main server function
@@ -11,7 +10,6 @@ int runServer(int PortNum)
     int sockFd = -1;
     struct  sockaddr_in server;
     SSL_CTX*    theSSLctx = NULL;
-    SSL* SSL_fds[FD_SETSIZE];
     fd_set readFdSet, writeFdSet, exceptFdSet;
 
     /* Print the banner */
@@ -22,7 +20,7 @@ int runServer(int PortNum)
 
     /* Lets initalize the server attributes  */
     sockFd = initalizeServer(PortNum, server);
-
+    debugSockAddr("Server ip = ", server);
     /* Run the server FOREVER */
     struct timeval tv;
     tv.tv_sec = 30;
@@ -30,17 +28,70 @@ int runServer(int PortNum)
     while(1)
     {
         int retval = -1;
-        retval = select(FD_SETSIZE, &readFdSet, &writeFdSet, &exceptFdSet, &tv);
+        int clientSockFd;
+        SSL *ssl;
+        /* zero out connection on sockfd if there is any */
+        FD_ZERO(&readFdSet);
+        FD_SET(sockFd, &readFdSet);
+        /* end of sock set zero */
+
+        retval = select(sockFd+1, &readFdSet, &writeFdSet, &exceptFdSet, &tv);
         if (retval > 0)
         {
+            if (FD_ISSET(sockFd, &readFdSet))
+            {
+                struct sockaddr_in *client = g_new0(struct sockaddr_in, 1);
+                socklen_t clienLength = (socklen_t) sizeof(client);
+                clientSockFd = accept(sockFd, (struct sockaddr*) client, &clienLength);
+
+                ssl = SSL_new(theSSLctx);
+                if (ssl != NULL)
+                {
+                    SSL_set_fd(ssl, clientSockFd);
+
+                    int sslErr = -1;
+                    sslErr = SSL_accept(ssl);
+                    if (sslErr > 0)
+                    {
+                        logger((struct sockaddr_in*) client, 0); //report connection to console
+                        UserI *newUser = g_new0(UserI, 1); //create new User struct
+                        initializeUserStruct(newUser);
+                        newUser->sslFd = ssl;
+                        newUser->fd = clientSockFd;
+                        g_tree_insert(connectionList, client, newUser);
+                        if (SSL_write(ssl, "Server: Welcome!", 16) == -1)
+                        {
+                            ERR_print_errors_fp(stderr);
+                        }
+                    }
+                    else if (sslErr == -1)
+                    {
+                        ERR_print_errors_fp(stderr);
+                        printf("SSL connection accept failed");
+                    }
+                }
+                else
+                {
+                    ERR_print_errors_fp(stderr);
+                }
+            }
 
         }
         else
-        if (retval < 0)
+        if (retval == -1)
         {
             perror("Select error: ");
         }
     }
+    /* exit server */
+    printToOutput("Server exiting\n", 15);
+    g_tree_destroy(connectionList);
+    g_tree_destroy(roomsOnServerList);
+    g_tree_destroy(usersOnServerList);
+
+    SSL_CTX_free(theSSLctx);
+    ERR_remove_state(0);
+    ERR_free_strings();
 }
 
 /*
@@ -116,6 +167,12 @@ void initializeOpenSSLCert(SSL_CTX *theSSLctx)
         exit(1); //exit with errors   
     }
 
+    /* lets check if private key and certificate check out */
+    if (!SSL_CTX_check_private_key(theSSLctx))
+    {
+        ERR_print_errors_fp(stderr);
+        exit(1);
+    }
     SSL_CTX_set_verify(theSSLctx, SSL_VERIFY_NONE, NULL);
 }
 
@@ -148,4 +205,55 @@ int sockaddr_in_cmp(const void *addr1, const void *addr2)
 gint fd_cmp(gconstpointer fd1,  gconstpointer fd2, gpointer G_GNUC_UNUSED data)
 {
      return GPOINTER_TO_INT(fd1) - GPOINTER_TO_INT(fd2);
+}
+
+void logger(struct sockaddr_in *client, int type)
+{
+    debugS("Logging to file");
+    char portNum[2];
+    char buffer[512];
+    char theTime[21];
+    int len = 20;
+    char clBugg[len];
+    sprintf(portNum, "%d", ntohs(client->sin_port));
+    getHeaderTime(theTime, 2);
+    FILE *logfp = NULL;
+    logfp = fopen(LOGFILE, "a+");
+    if (logfp == NULL)
+    {
+        perror("Open logfile error: ");
+        return;
+    }
+    debugS("Creating log buffer");
+    strcat(buffer, theTime);
+    strcat(buffer, " : ");
+    strcat(buffer, inet_ntop(AF_INET, &(client->sin_addr), clBugg, len));
+    strcat(buffer, ":");
+    strcat(buffer, portNum);
+    if (type == 0)
+    {
+        strcat(buffer, " connected");
+    }
+    else
+    if (type == 1)
+    {
+        strcat(buffer, " disconnected");
+    }
+    strcat(buffer, "\r\n");
+    fprintf(logfp, "%s", buffer);
+    printf("%s", buffer);
+    fclose(logfp);
+    logfp = NULL;
+    return;
+}
+
+void initializeUserStruct(struct userInformation *newUser)
+{
+    newUser->sslFd = NULL;
+    newUser->fd = -1;
+    newUser->username = NULL;
+    newUser->nickname = NULL;
+    newUser->roomname = NULL;
+    newUser->countLogins = 0;
+    newUser->logintTimeout = 0;
 }
