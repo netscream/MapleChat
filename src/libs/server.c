@@ -10,7 +10,6 @@ int runServer(int PortNum)
     int sockFd = -1;
     struct  sockaddr_in server;
     SSL_CTX*    theSSLctx = NULL;
-    fd_set readFdSet, writeFdSet, exceptFdSet;
 
     /* Print the banner */
     printBanner();
@@ -22,20 +21,22 @@ int runServer(int PortNum)
     sockFd = initalizeServer(PortNum, server);
     debugSockAddr("Server ip = ", server);
     /* Run the server FOREVER */
-    struct timeval tv;
-    tv.tv_sec = 30;
-    tv.tv_usec = 0;
+    
     while(1)
     {
+        fd_set readFdSet;
         int retval = -1;
         int clientSockFd;
         SSL *ssl;
+        struct timeval tv;
+        tv.tv_sec = 30;
+        tv.tv_usec = 0;
         /* zero out connection on sockfd if there is any */
         FD_ZERO(&readFdSet);
         FD_SET(sockFd, &readFdSet);
         /* end of sock set zero */
 
-        retval = select(sockFd+1, &readFdSet, &writeFdSet, &exceptFdSet, &tv);
+        retval = select(sockFd+1, &readFdSet, 0, 0, &tv);
         if (retval > 0)
         {
             if (FD_ISSET(sockFd, &readFdSet))
