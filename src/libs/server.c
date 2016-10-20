@@ -43,11 +43,12 @@ int runServer(int PortNum)
             {
                 struct sockaddr_in *client = g_new0(struct sockaddr_in, 1);
                 socklen_t clienLength = (socklen_t) sizeof(client);
-                clientSockFd = accept(sockFd, (struct sockaddr*) client, &clienLength);
+                clientSockFd = accept(sockFd, (struct sockaddr*) &client, &clienLength);
 
                 ssl = SSL_new(theSSLctx);
                 if (ssl != NULL)
                 {
+                    debugS("NEW SSL != NULL");
                     SSL_set_fd(ssl, clientSockFd);
 
                     int sslErr = -1;
@@ -62,17 +63,19 @@ int runServer(int PortNum)
                         g_tree_insert(connectionList, client, newUser);
                         if (SSL_write(ssl, "Server: Welcome!", 16) == -1)
                         {
+                            debugS("SSL_WRITE error:");
                             ERR_print_errors_fp(stderr);
                         }
                     }
                     else if (sslErr == -1)
                     {
+                        debugS("SSL accept error:");
                         ERR_print_errors_fp(stderr);
-                        printf("SSL connection accept failed");
                     }
                 }
                 else
                 {
+                    debugS("SSL new error");
                     ERR_print_errors_fp(stderr);
                 }
             }
@@ -119,6 +122,7 @@ int initalizeServer(int PortNum, struct sockaddr_in server)
         exit(EXIT_FAILURE);
     }
     
+
     /* Bind port */
     if (bind(sockFd, (struct sockaddr*)&server, sizeof(server)) ==  -1)
     {
@@ -148,10 +152,10 @@ void initializeOpenSSLCert(SSL_CTX *theSSLctx)
     SSL_load_error_strings();   //load errno strings
 
     OpenSSL_add_all_algorithms(); //add digest and ciphers
-    theSSLctx = SSL_CTX_new(TLSv1_server_method());
+    theSSLctx = SSL_CTX_new(SSLMETHOD);
     if (theSSLctx == NULL)
     {
-        perror("SSL_CTX_new error: ");
+        ERR_print_errors_fp(stderr);
         exit(1);
     }
 
@@ -162,7 +166,7 @@ void initializeOpenSSLCert(SSL_CTX *theSSLctx)
         exit(1); //exit with errors
     }
     /* Lets load the key pointed by the macros */
-    if (SSL_CTX_use_PrivateKey_file(theSSLctx, OPEN_SSL_SERVER_KEY, SSL_FILETYPE_PEM) <= 0)
+    if (SSL_CTX_use_PrivateKey_file(theSSLctx, OPENSSL_SERVER_KEY, SSL_FILETYPE_PEM) <= 0)
     {
         ERR_print_errors_fp(stderr); //openssl/err.h
         exit(1); //exit with errors   
