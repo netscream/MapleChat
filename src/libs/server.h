@@ -42,8 +42,9 @@ struct userInformation {
 typedef struct userInformation UserI;
 /* end of structures for the users */
 int runServer(int PortNum);
-int initalizeServer(int PortNum, struct sockaddr_in server);
-void initializeOpenSSLCert(SSL_CTX *theSSLctx);
+struct sockaddr_in serverStructInit(const int PortNum);
+int initalizeServer(const int PortNum, struct sockaddr_in server);
+SSL_CTX* initializeOpenSSLCert();
 int sockaddr_in_cmp(const void *addr1, const void *addr2);
 gint fd_cmp(gconstpointer fd1,  gconstpointer fd2, gpointer G_GNUC_UNUSED data);
 void logger(struct sockaddr_in *client, int type);

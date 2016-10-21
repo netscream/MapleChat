@@ -9,15 +9,21 @@ int runServer(int PortNum)
 {
     int sockFd = -1;
     struct  sockaddr_in server;
-    SSL_CTX*    theSSLctx = NULL;
+    SSL_CTX* theSSLctx = NULL;
 
     /* Print the banner */
     printBanner();
 	/* openssl implementation */
-    initializeOpenSSLCert(theSSLctx);
+    theSSLctx = initializeOpenSSLCert();
+    if (theSSLctx == NULL)
+    {
+        debugS("CTX not initalized");
+        exit(1);
+    }
     /* server implementation */ 
 
     /* Lets initalize the server attributes  */
+    server = serverStructInit(PortNum);
     sockFd = initalizeServer(PortNum, server);
     debugSockAddr("Server ip = ", server);
     /* Run the server FOREVER */
@@ -76,6 +82,7 @@ int runServer(int PortNum)
                 else
                 {
                     debugS("SSL new error");
+                    perror("SSL NEW ERROR = ");
                     ERR_print_errors_fp(stderr);
                 }
             }
@@ -97,6 +104,20 @@ int runServer(int PortNum)
     ERR_remove_state(0);
     ERR_free_strings();
 }
+/*
+ * Function serverStructInit()
+ * returns a struct for the server initalization
+ */
+struct sockaddr_in serverStructInit(int PortNum)
+{
+    struct sockaddr_in server;
+    memset(&server, 0, sizeof(server));
+    server.sin_family = AF_INET;
+    server.sin_port = htons(PortNum);
+    server.sin_addr.s_addr = htonl(INADDR_ANY);
+    return server;
+}
+
 
 /*
  * Function initalizeServer()
@@ -106,14 +127,10 @@ int runServer(int PortNum)
  * Listens to sockets
  * returns sockfd
  */
-int initalizeServer(int PortNum, struct sockaddr_in server)
+int initalizeServer(const int PortNum, struct sockaddr_in server)
 {
     debugS("Initializing the server!");
     int sockFd;
-    memset(&server, 0, sizeof(server));
-    server.sin_family = AF_INET;
-    server.sin_port = htons(PortNum);
-    server.sin_addr.s_addr = htonl(INADDR_ANY);
 
     sockFd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockFd == -1)
@@ -145,9 +162,10 @@ int initalizeServer(int PortNum, struct sockaddr_in server)
  * For SSL library initalization and configuration
  *
  */
-void initializeOpenSSLCert(SSL_CTX *theSSLctx)
+SSL_CTX* initializeOpenSSLCert()
 {
     debugS("Initializing the openssl certification!");
+    SSL_CTX* theSSLctx;
     SSL_library_init();         //initialize library
     SSL_load_error_strings();   //load errno strings
 
@@ -179,6 +197,7 @@ void initializeOpenSSLCert(SSL_CTX *theSSLctx)
         exit(1);
     }
     SSL_CTX_set_verify(theSSLctx, SSL_VERIFY_NONE, NULL);
+    return theSSLctx;
 }
 
 /* This can be used to build instances of GTree that index on
