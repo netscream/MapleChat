@@ -20,7 +20,6 @@
 #include "printing.h"
 #define LOGFILE "./chatd.log"
 /* Openssl definations */
-#define SSLMETHOD TLSv1_server_method()
 #define OPENSSL_SERVER_CERT "cert/fd.crt"
 #define OPENSSL_SERVER_KEY "cert/fd.key"
 /* End of openssl definations */

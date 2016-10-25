@@ -6,20 +6,21 @@ int runClient(const char* serverIP, const int portNum)
     theSSLctx = NULL;
     initialize_exitfd();
     initializeOpenSSLCert();
+    int sslErr = -1;
     if (theSSLctx == NULL)
     {
         printf("CTX = NULL");
         exit(1);
     }
     connectToServer(serverIP, portNum);
-    int sslErr = -1;
+    
     debugS("SSL connect");
+    if (server_ssl == NULL) { exit(1); };
     sslErr = SSL_connect(server_ssl);
-    if (sslErr <= 0 || sslErr >= 2)
+    if (sslErr <= 0 || sslErr == 2)
     {
         debugS("SSL connect error:");
-        ERR_print_errors_fp(stderr);
-        exit(1);
+        printSSLError(SSL_get_error(server_ssl, sslErr));
     }
 
     /* Now we can create BIOs and use them instead of the socket.
@@ -120,6 +121,14 @@ void connectToServer(const char* server, const int portNum)
     inet_pton(AF_INET, server, &serverAddr.sin_addr);
 
     connect(server_fd, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+
+     /* Use the socket for the SSL connection. */
+    if (SSL_set_fd(server_ssl, server_fd) <= 0)
+    {
+        debugS("SSL set fd error:");
+        ERR_print_errors_fp(stderr);
+        exit(1);
+    }
 }
 
 /* If someone kills the client, it should still clean up the readline
@@ -317,7 +326,7 @@ void initializeOpenSSLCert()
     SSL_library_init();
     OpenSSL_add_all_algorithms(); 
     SSL_load_error_strings();
-    theSSLctx = SSL_CTX_new(SSLMETHOD);
+    theSSLctx = SSL_CTX_new(TLSv1_client_method());
     if (theSSLctx == NULL)
     {
         debugS("SSL ctx new error: ");
@@ -340,6 +349,7 @@ void initializeOpenSSLCert()
         ERR_print_errors_fp(stderr); //openssl/err.h
         exit(1); //exit with errors
     }
+
     SSL_CTX_set_verify(theSSLctx, SSL_VERIFY_NONE, NULL);
     server_ssl = SSL_new(theSSLctx);    
     if (server_ssl == NULL)
@@ -352,12 +362,40 @@ void initializeOpenSSLCert()
      * create here can be used in select calls, so do not forget
      * them.
      */
+}
 
-    /* Use the socket for the SSL connection. */
-    if (SSL_set_fd(server_ssl, server_fd) <= 0)
+void printSSLError(int err)
+{
+    switch (err) 
     {
-        debugS("SSL set fd error:");
-        ERR_print_errors_fp(stderr);
-        exit(1);
+        case SSL_ERROR_NONE: // Success
+            break;
+        case SSL_ERROR_SSL:
+            printf("SSL_ERROR_SSL:\n");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+        case SSL_ERROR_WANT_READ:
+            printf ("SSL_ERROR_WANT_READ:\n");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+        case SSL_ERROR_WANT_WRITE:
+            printf("SSL_ERROR_WANT_WRITE:\n");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+        case SSL_ERROR_WANT_CONNECT:
+            printf("SSL_ERROR_WANT_CONNECT:\n");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+        case SSL_ERROR_SYSCALL:
+            printf("SSL_ERROR_SYSCALL:\n");
+            exit(1);
+        case SSL_ERROR_ZERO_RETURN:
+            printf("SSL_ERROR_SYSCALL:\n");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+        default:
+            printf("Unknown error:");
+            ERR_print_errors_fp(stderr);
+            exit(1);
     }
 }

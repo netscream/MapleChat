@@ -23,9 +23,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#define SSLMETHOD TLSv1_client_method()
 #define OPENSSL_SERVER_CERT "cert/fd.crt"
-#define OPEN_SSL_SERVER_PUBLIC_KEY "cert/fd-public.key" //public key
 /* This variable holds a file descriptor of a pipe on which we send a
  * number if a signal is received. */
 static int exitfd[2];
@@ -61,5 +59,5 @@ void signal_handler(int signum);
 static void initialize_exitfd(void);
 void readline_callback(char *line);
 void initializeOpenSSLCert();
-
+void printSSLError(int err);
 #endif

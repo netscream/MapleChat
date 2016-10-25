@@ -9,7 +9,7 @@ int runServer(int PortNum)
 {
     int sockFd = -1;
     struct  sockaddr_in server;
-    SSL_CTX* theSSLctx = NULL;
+    SSL_CTX* theSSLctx;
 
     /* Print the banner */
     printBanner();
@@ -33,7 +33,7 @@ int runServer(int PortNum)
         fd_set readFdSet;
         int retval = -1;
         int clientSockFd;
-        SSL *ssl;
+        SSL *sslclient;
         struct timeval tv;
         tv.tv_sec = 30;
         tv.tv_usec = 0;
@@ -51,29 +51,36 @@ int runServer(int PortNum)
                 socklen_t clienLength = (socklen_t) sizeof(client);
                 clientSockFd = accept(sockFd, (struct sockaddr*) &client, &clienLength);
 
-                ssl = SSL_new(theSSLctx);
-                if (ssl != NULL)
+                sslclient = SSL_new(theSSLctx);
+                if (sslclient != NULL)
                 {
                     debugS("NEW SSL != NULL");
-                    SSL_set_fd(ssl, clientSockFd);
-
                     int sslErr = -1;
-                    sslErr = SSL_accept(ssl);
+                    sslErr = SSL_set_fd(sslclient, clientSockFd);
+                    if (sslErr < 0)
+                    {
+                        debugS("SSL_set_fd error: ");
+                        ERR_print_errors_fp(stderr);
+                    }
+
+                    sslErr = SSL_accept(sslclient);
+                    debugD("SSL ACCEPT = ", sslErr);
                     if (sslErr > 0)
                     {
+                        debugS("STUFF");
                         logger((struct sockaddr_in*) client, 0); //report connection to console
                         UserI *newUser = g_new0(UserI, 1); //create new User struct
                         initializeUserStruct(newUser);
-                        newUser->sslFd = ssl;
+                        newUser->sslFd = sslclient;
                         newUser->fd = clientSockFd;
                         g_tree_insert(connectionList, client, newUser);
-                        if (SSL_write(ssl, "Server: Welcome!", 16) == -1)
+                        if (SSL_write(sslclient, "Server: Welcome!", 16) == -1)
                         {
                             debugS("SSL_WRITE error:");
                             ERR_print_errors_fp(stderr);
                         }
                     }
-                    else if (sslErr == -1)
+                    else if (sslErr <= 0 || sslErr > 1)
                     {
                         debugS("SSL accept error:");
                         ERR_print_errors_fp(stderr);
@@ -148,7 +155,7 @@ int initalizeServer(const int PortNum, struct sockaddr_in server)
     }
 
     /* Listen to port, allow 1 connection */
-    if (listen(sockFd, 1) == -1)
+    if (listen(sockFd, 5) == -1)
     {
         perror("Listen error: ");
         exit(EXIT_FAILURE);
@@ -167,10 +174,10 @@ SSL_CTX* initializeOpenSSLCert()
     debugS("Initializing the openssl certification!");
     SSL_CTX* theSSLctx;
     SSL_library_init();         //initialize library
+    OpenSSL_add_all_algorithms(); //add digest and ciphers
     SSL_load_error_strings();   //load errno strings
 
-    OpenSSL_add_all_algorithms(); //add digest and ciphers
-    theSSLctx = SSL_CTX_new(SSLMETHOD);
+    theSSLctx = SSL_CTX_new(TLSv1_server_method());
     if (theSSLctx == NULL)
     {
         ERR_print_errors_fp(stderr);
