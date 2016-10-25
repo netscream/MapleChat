@@ -6,7 +6,6 @@ int runClient(const char* serverIP, const int portNum)
     theSSLctx = NULL;
     initialize_exitfd();
     initializeOpenSSLCert();
-    int sslErr = -1;
     if (theSSLctx == NULL)
     {
         printf("CTX = NULL");
@@ -15,14 +14,6 @@ int runClient(const char* serverIP, const int portNum)
     connectToServer(serverIP, portNum);
     
     debugS("SSL connect");
-    if (server_ssl == NULL) { exit(1); };
-    sslErr = SSL_connect(server_ssl);
-    if (sslErr <= 0 || sslErr == 2)
-    {
-        debugS("SSL connect error:");
-        printSSLError(SSL_get_error(server_ssl, sslErr));
-    }
-
     /* Now we can create BIOs and use them instead of the socket.
      * The BIO is responsible for maintaining the state of the
      * encrypted connection and the actual encryption. Reads and
@@ -107,6 +98,7 @@ int runClient(const char* serverIP, const int portNum)
 void connectToServer(const char* server, const int portNum)
 {
     debugS("Inside connectToServer\n");
+    int sslErr = -1;
     memset(&serverAddr, '\0', sizeof(serverAddr));
 
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -129,6 +121,14 @@ void connectToServer(const char* server, const int portNum)
         ERR_print_errors_fp(stderr);
         exit(1);
     }
+
+    sslErr = SSL_connect(server_ssl);
+    if (sslErr <= 0 || sslErr == 2)
+    {
+        debugS("SSL connect error:");
+        printSSLError(SSL_get_error(server_ssl, sslErr));
+    }
+
 }
 
 /* If someone kills the client, it should still clean up the readline
