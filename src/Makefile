@@ -16,7 +16,7 @@ chatd.o:
 	${CC} ${CFLAGS} ${GLIBS} chatd.c -c
 
 chat.o:
-	${CC} ${CFLAGS} ${GLIBS} chat.c -c	
+	${CC} ${CFLAGS} ${GLIBS} chat.c -c
 
 debugging.o: libs/debugging.c
 	${CC} ${CFLAGS} ${GLIBS} libs/debugging.c -c
@@ -35,3 +35,11 @@ clean:
 
 distclean: clean
 	rm -f chatd chat
+
+run_server:
+	./chatd $$(/labs/tsam16/my_port || echo 2000)
+
+run_client:
+	./chat 127.0.0.1 $$(/labs/tsam16/my_port || echo 2000)
+
+
