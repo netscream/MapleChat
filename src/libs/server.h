@@ -28,18 +28,26 @@ GTree *connectionList;
 GTree *roomsOnServerList;
 GTree *usersOnServerList;
 /* end of grees for implementation*/
+
 /* Structures to be used for users */
 struct userInformation {
-	SSL *sslFd;
-	int fd;
-	char *username;
-	char *nickname;
-	char *roomname;
-	int countLogins;
-	time_t logintTimeout;
+    SSL *sslFd;
+    int fd;
+    char *username;
+    char *nickname;
+    char *roomname;
+    int countLogins;
+    time_t logintTimeout;
 };
 typedef struct userInformation UserI;
 /* end of structures for the users */
+
+struct iterArguments {
+    fd_set* readFdSet;
+    int* max_fd;
+};
+typedef struct iterArguments iterArgs;
+
 int runServer(int PortNum);
 struct sockaddr_in serverStructInit(const int PortNum);
 int initalizeServer(const int PortNum, struct sockaddr_in server);

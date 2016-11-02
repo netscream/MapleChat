@@ -6,7 +6,7 @@ gboolean iter_connections(gpointer key, gpointer value, gpointer data) {
     if (FD_ISSET(user->fd, (fd_set *)data))
     {
         printf("Socket %d is active\n", user->fd);
-	char message[512]; 
+	char message[512];
 	memset(message, 0, sizeof(message));
 	SSL_read(user->sslFd, message, sizeof(message));
 	printf("Skilaboðin voru -> %s \n", message);
@@ -23,13 +23,15 @@ gboolean iter_connections(gpointer key, gpointer value, gpointer data) {
 
 gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data) {
     UserI* user = (UserI* ) value;
+    iterArgs* args = (iterArgs *) data;
 
     printf("Marking %d\n", user->fd);
 
-    FD_SET(user->fd, (fd_set *)data);
+    FD_SET(user->fd, args->readFdSet);
 
-    /* TODO: We may want to make this stop once we find an active connection */
-    /* to make this more scalable (what if we have a million users?) */
+    if(user->fd > *(args->max_fd))
+        *(args->max_fd) = user->fd;
+
     return 0;
 }
 
@@ -40,7 +42,7 @@ gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data) {
  */
 int runServer(int PortNum)
 {
-    int sockFd = -1;
+    int sockFd = -1, max_fd = 0;
     struct  sockaddr_in server;
     SSL_CTX* theSSLctx;
     GTree* connectionList;
@@ -78,7 +80,9 @@ int runServer(int PortNum)
         int activity = -1;
         int clientSockFd;
         SSL *sslclient;
-       struct timeval tv;
+        struct timeval tv;
+        iterArgs args;
+
         tv.tv_sec = 30;
         tv.tv_usec = 0;
         /* zero out connection on sockfd if there is any */
@@ -86,11 +90,16 @@ int runServer(int PortNum)
         FD_SET(sockFd, &readFdSet);
         /* end of sock set zero */
 
-        /* TODO: Iterate through each connected user and add its file */
-        /* descriptor to fd_set */
-        g_tree_foreach(connectionList, (GTraverseFunc)iter_add_to_fd_set, &readFdSet);
+        max_fd = sockFd;
 
-        activity = select(sockFd+3, &readFdSet, 0, 0, &tv);
+        /* Set up arguments for iterator function */
+        args.readFdSet = &readFdSet;
+        args.max_fd = & max_fd;
+
+        /* Iterate over each connection and add it to our fd set */
+        g_tree_foreach(connectionList, (GTraverseFunc)iter_add_to_fd_set, &args);
+
+        activity = select(max_fd + 1, &readFdSet, 0, 0, &tv);
 
         if (activity < 0 && errno != EINTR)
         {
