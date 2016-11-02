@@ -1,5 +1,40 @@
 #include "server.h"
 
+gboolean iter_connections(gpointer key, gpointer value, gpointer data) {
+    UserI* user = (UserI* ) value;
+
+    if (FD_ISSET(user->fd, (fd_set *)data))
+    {
+        printf("Socket %d is active\n", user->fd);
+	char message[512];
+	memset(message, 0, sizeof(message));
+	SSL_read(user->sslFd, message, sizeof(message));
+	printf("Skilaboðin voru -> %s \n", message);
+    }
+    else
+    {
+        printf("Socket %d is inactive\n", user->fd);
+    }
+
+    /* TODO: We may want to make this stop once we find an active connection */
+    /* to make this more scalable (what if we have a million users?) */
+    return 0;
+}
+
+gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data) {
+    UserI* user = (UserI* ) value;
+    iterArgs* args = (iterArgs *) data;
+
+    printf("Marking %d\n", user->fd);
+
+    FD_SET(user->fd, args->readFdSet);
+
+    if(user->fd > *(args->max_fd))
+        *(args->max_fd) = user->fd;
+
+    return 0;
+}
+
 /*
  * Function runServer
  * The main server function
@@ -7,9 +42,11 @@
  */
 int runServer(int PortNum)
 {
-    int sockFd = -1;
+    int sockFd = -1, max_fd = 0;
     struct  sockaddr_in server;
     SSL_CTX* theSSLctx;
+    GTree* connectionList;
+    int opt = 1;
 
     /* Print the banner */
     printBanner();
@@ -20,21 +57,32 @@ int runServer(int PortNum)
         debugS("CTX not initalized");
         exit(1);
     }
-    /* server implementation */ 
+    /* server implementation */
 
     /* Lets initalize the server attributes  */
     server = serverStructInit(PortNum);
     sockFd = initalizeServer(PortNum, server);
     debugSockAddr("Server ip = ", server);
     /* Run the server FOREVER */
-    
+
+    /* Allow multiple binds on main socket, this prevents blocking when debugging */
+    if(setsockopt(sockFd, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0) {
+        error("setsockopt");
+        return 1;
+    }
+
+    /* Initialize connectionList */
+    connectionList = g_tree_new((GCompareFunc)fd_cmp);
+
     while(1)
     {
         fd_set readFdSet;
-        int retval = -1;
+        int activity = -1;
         int clientSockFd;
         SSL *sslclient;
         struct timeval tv;
+        iterArgs args;
+
         tv.tv_sec = 30;
         tv.tv_usec = 0;
         /* zero out connection on sockfd if there is any */
@@ -42,64 +90,81 @@ int runServer(int PortNum)
         FD_SET(sockFd, &readFdSet);
         /* end of sock set zero */
 
-        retval = select(sockFd+1, &readFdSet, 0, 0, &tv);
-        if (retval > 0)
+        max_fd = sockFd;
+
+        /* Set up arguments for iterator function */
+        args.readFdSet = &readFdSet;
+        args.max_fd = & max_fd;
+
+        /* Iterate over each connection and add it to our fd set */
+        g_tree_foreach(connectionList, (GTraverseFunc)iter_add_to_fd_set, &args);
+
+        activity = select(max_fd + 1, &readFdSet, 0, 0, &tv);
+
+        if (activity < 0 && errno != EINTR)
         {
-            if (FD_ISSET(sockFd, &readFdSet))
+            perror("select");
+            return 1;
+        }
+
+        /* Check if the main socket is active then we have an */
+        /* incoming connection */
+        if (FD_ISSET(sockFd, &readFdSet) && activity > 0)
+        {
+            struct sockaddr_in *client = g_new0(struct sockaddr_in, 1);
+            socklen_t clienLength = (socklen_t) sizeof(client);
+            clientSockFd = accept(sockFd, (struct sockaddr*) &client, &clienLength);
+
+            sslclient = SSL_new(theSSLctx);
+            if (sslclient != NULL)
             {
-                struct sockaddr_in *client = g_new0(struct sockaddr_in, 1);
-                socklen_t clienLength = (socklen_t) sizeof(client);
-                clientSockFd = accept(sockFd, (struct sockaddr*) &client, &clienLength);
-
-                sslclient = SSL_new(theSSLctx);
-                if (sslclient != NULL)
+                debugS("NEW SSL != NULL");
+                int sslErr = -1;
+                sslErr = SSL_set_fd(sslclient, clientSockFd);
+                if (sslErr < 0)
                 {
-                    debugS("NEW SSL != NULL");
-                    int sslErr = -1;
-                    sslErr = SSL_set_fd(sslclient, clientSockFd);
-                    if (sslErr < 0)
-                    {
-                        debugS("SSL_set_fd error: ");
-                        ERR_print_errors_fp(stderr);
-                    }
-
-                    sslErr = SSL_accept(sslclient);
-                    debugD("SSL ACCEPT = ", sslErr);
-                    if (sslErr > 0)
-                    {
-                        debugS("STUFF");
-                        logger((struct sockaddr_in*) client, 0); //report connection to console
-                        UserI *newUser = g_new0(UserI, 1); //create new User struct
-                        initializeUserStruct(newUser);
-                        newUser->sslFd = sslclient;
-                        newUser->fd = clientSockFd;
-                        g_tree_insert(connectionList, client, newUser);
-                        if (SSL_write(sslclient, "Server: Welcome!", 16) == -1)
-                        {
-                            debugS("SSL_WRITE error:");
-                            ERR_print_errors_fp(stderr);
-                        }
-                    }
-                    else if (sslErr <= 0 || sslErr > 1)
-                    {
-                        debugS("SSL accept error:");
-                        ERR_print_errors_fp(stderr);
-                    }
+                    debugS("SSL_set_fd error: ");
+                    ERR_print_errors_fp(stderr);
                 }
-                else
+
+                sslErr = SSL_accept(sslclient);
+                debugD("SSL ACCEPT = ", sslErr);
+                if (sslErr > 0)
                 {
-                    debugS("SSL new error");
-                    perror("SSL NEW ERROR = ");
+                    debugS("STUFF");
+                    //logger((struct sockaddr_in*) client, 0); //report connection to console
+                    UserI *newUser = g_new0(UserI, 1); //create new User struct
+                    initializeUserStruct(newUser);
+                    newUser->sslFd = sslclient;
+                    newUser->fd = clientSockFd;
+                    newUser->countLogins = 3;
+                    g_tree_insert(connectionList, &newUser->fd, newUser);
+                    if (SSL_write(sslclient, "Server: Welcome!", 16) == -1)
+                    {
+                        debugS("SSL_WRITE error:");
+                        ERR_print_errors_fp(stderr);
+                    }
+
+                    continue;
+                }
+                else if (sslErr <= 0 || sslErr > 1)
+                {
+                    debugS("SSL accept error:");
                     ERR_print_errors_fp(stderr);
                 }
             }
+            else
+            {
+                debugS("SSL new error");
+                perror("SSL NEW ERROR = ");
+                ERR_print_errors_fp(stderr);
+            }
+        }
 
-        }
-        else
-        if (retval == -1)
-        {
-            perror("Select error: ");
-        }
+        debugS("Processing clients");
+        /* TODO: Iterate through all of the clients and check if */
+        /* their socket is active */
+        g_tree_foreach(connectionList, (GTraverseFunc)iter_connections, &readFdSet);
     }
     /* exit server */
     printToOutput("Server exiting\n", 15);
@@ -145,7 +210,7 @@ int initalizeServer(const int PortNum, struct sockaddr_in server)
         perror("Socket error: ");
         exit(EXIT_FAILURE);
     }
-    
+
 
     /* Bind port */
     if (bind(sockFd, (struct sockaddr*)&server, sizeof(server)) ==  -1)
@@ -186,7 +251,7 @@ SSL_CTX* initializeOpenSSLCert()
 
     /* Lets load the certificate pointed by macros */
     if (SSL_CTX_use_certificate_file(theSSLctx, OPENSSL_SERVER_CERT, SSL_FILETYPE_PEM) <= 0)
-    {  
+    {
         ERR_print_errors_fp(stderr); //openssl/err.h
         exit(1); //exit with errors
     }
@@ -194,7 +259,7 @@ SSL_CTX* initializeOpenSSLCert()
     if (SSL_CTX_use_PrivateKey_file(theSSLctx, OPENSSL_SERVER_KEY, SSL_FILETYPE_PEM) <= 0)
     {
         ERR_print_errors_fp(stderr); //openssl/err.h
-        exit(1); //exit with errors   
+        exit(1); //exit with errors
     }
 
     /* lets check if private key and certificate check out */
@@ -214,8 +279,9 @@ int sockaddr_in_cmp(const void *addr1, const void *addr2)
      const struct sockaddr_in *_addr1 = addr1;
      const struct sockaddr_in *_addr2 = addr2;
 
-     /* If either of the pointers is NULL or the addresses
-        belong to different families, we abort. */
+     /* If either of the pointers is NULL or the addresses */
+     /* belong to different families, we abort. */
+
      g_assert((_addr1 == NULL) || (_addr2 == NULL) ||
               (_addr1->sin_family != _addr2->sin_family));
 
@@ -228,7 +294,6 @@ int sockaddr_in_cmp(const void *addr1, const void *addr2)
      } else if (_addr1->sin_port > _addr2->sin_port) {
           return 1;
      }
-     return 0;
 }
 
 /* This can be used to build instances of GTree that index on

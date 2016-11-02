@@ -12,7 +12,7 @@ int runClient(const char* serverIP, const int portNum)
         exit(1);
     }
     connectToServer(serverIP, portNum);
-    
+
     debugS("SSL connect");
     /* Now we can create BIOs and use them instead of the socket.
      * The BIO is responsible for maintaining the state of the
@@ -28,7 +28,7 @@ int runClient(const char* serverIP, const int portNum)
         prompt = strdup("> ");
         rl_callback_handler_install(prompt, (rl_vcpfunc_t*) &readline_callback);
         for (;;) {
-                debugS("For loop in run server");
+                //debugS("For loop in run server");
                 fd_set rfds;
                 struct timeval timeout;
 
@@ -38,10 +38,12 @@ int runClient(const char* serverIP, const int portNum)
                 FD_ZERO(&rfds);
                 FD_SET(STDIN_FILENO, &rfds);
                 FD_SET(exitfd[0], &rfds);
+		FD_SET(server_fd, &rfds);
                 timeout.tv_sec = 5;
                 timeout.tv_usec = 0;
-        
-                int r = select(exitfd[0] + 1, &rfds, NULL, NULL, &timeout);
+		//debugD("serverfd = ", server_fd);
+		//debugD("exitfd = ", exitfd[0]);
+                int r = select(exitfd[0] + 3, &rfds, NULL, NULL, &timeout);
                 if (r < 0) {
                         if (errno == EINTR) {
                                 /* This should either retry the call or
@@ -64,33 +66,39 @@ int runClient(const char* serverIP, const int portNum)
                 if (FD_ISSET(exitfd[0], &rfds)) {
                         /* We received a signal. */
                         int signum;
-                        for (;;) {
-                            char message[512];
-                            if (SSL_read(server_ssl, message, sizeof(message)) == -1)
-                            {
-                                perror("SSL read error: ");
-                            }
-                            printf("%s\n", message);
+
+                        char message[512];
+                        if (SSL_read(server_ssl, message, sizeof(message)) == -1)
+                        {
+                            perror("SSL read error: ");
                         }
+                        printf("%s\n", message);
+
                         if (signum == SIGINT) {
                                 /* Don't do anything. */
                         } else if (signum == SIGTERM || signum == SIGQUIT) {
                                 /* Clean-up and exit. */
                                 break;
                         }
-                                
+
                 }
                 if (FD_ISSET(STDIN_FILENO, &rfds)) {
                         rl_callback_read_char();
                 }
 
                 /* Handle messages from the server here! */
+		if (FD_ISSET(server_fd, &rfds)) {
+			debugS("getting messages from server");
+			char message[512];
+			memset(&message, 0, sizeof(message));
+			SSL_read(server_ssl, message, sizeof(message));
+			printf("%s", message);
+		}
         }
-        
+
         /* replace by code to shutdown the connection and exit
            the program. */
 }
-
 /*
  * Function that serves only to connect to the server we intent to use.
  *
@@ -107,7 +115,7 @@ void connectToServer(const char* server, const int portNum)
         perror("Socket error: ");
         exit(EXIT_FAILURE);
     }
-
+    
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(portNum);
     inet_pton(AF_INET, server, &serverAddr.sin_addr);
@@ -154,18 +162,18 @@ static void initialize_exitfd(void)
         }
 
         /* Make read and write ends of pipe nonblocking */
-        int flags;        
+        int flags;
         flags = fcntl(exitfd[0], F_GETFL);
         if (flags == -1) {
                 perror("fcntl-F_GETFL");
                 exit(EXIT_FAILURE);
-        }        
+        }
         flags |= O_NONBLOCK;                /* Make read end nonblocking */
         if (fcntl(exitfd[0], F_SETFL, flags) == -1) {
                 perror("fcntl-F_SETFL");
                 exit(EXIT_FAILURE);
         }
- 
+
         flags = fcntl(exitfd[1], F_GETFL);
         if (flags == -1) {
                 perror("fcntl-F_SETFL");
@@ -193,7 +201,7 @@ static void initialize_exitfd(void)
         if (sigaction(SIGQUIT, &sa, NULL) == -1) {
                 perror("sigaction");
                 exit(EXIT_FAILURE);
-        }      
+        }
 }
 
 /* When a line is entered using the readline library, this function
@@ -252,8 +260,15 @@ void readline_callback(char *line)
                 return;
         }
         if (strncmp("/list", line, 5) == 0) {
-                /* Query all available chat rooms */
-                return;
+            debugS("Requesting list");
+	     
+            if (SSL_write(server_ssl, "LIST", strlen("LIST")) == -1)
+            {
+                debugS("SSL_WRITE error:");
+                ERR_print_errors_fp(stderr);
+            }
+            /* Query all available chat rooms */
+            return;
         }
         if (strncmp("/roll", line, 5) == 0) {
                 /* roll dice and declare winner. */
@@ -324,7 +339,7 @@ void initializeOpenSSLCert()
     debugS("Initialize openssl");
     /* Initialize OpenSSL */
     SSL_library_init();
-    OpenSSL_add_all_algorithms(); 
+    OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
     theSSLctx = SSL_CTX_new(TLSv1_client_method());
     if (theSSLctx == NULL)
@@ -344,14 +359,14 @@ void initializeOpenSSLCert()
 
      /* Lets load the certificate pointed by macros */
     if (SSL_CTX_use_certificate_file(theSSLctx, OPENSSL_SERVER_CERT, SSL_FILETYPE_PEM) <= 0)
-    {  
+    {
         debugS("CTX certificate error: ");
         ERR_print_errors_fp(stderr); //openssl/err.h
         exit(1); //exit with errors
     }
 
     SSL_CTX_set_verify(theSSLctx, SSL_VERIFY_NONE, NULL);
-    server_ssl = SSL_new(theSSLctx);    
+    server_ssl = SSL_new(theSSLctx);
     if (server_ssl == NULL)
     {
         debugS("CTX set verify error: ");
@@ -366,7 +381,7 @@ void initializeOpenSSLCert()
 
 void printSSLError(int err)
 {
-    switch (err) 
+    switch (err)
     {
         case SSL_ERROR_NONE: // Success
             break;
