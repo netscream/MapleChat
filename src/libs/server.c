@@ -61,7 +61,7 @@ int runServer(int PortNum)
 
     /* Allow multiple binds on main socket, this prevents blocking when debugging */
     if(setsockopt(sockFd, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0) {
-        perror("setsockopt");
+        error("setsockopt");
         return 1;
     }
 
@@ -74,7 +74,7 @@ int runServer(int PortNum)
         int activity = -1;
         int clientSockFd;
         SSL *sslclient;
-        struct timeval tv;
+       struct timeval tv;
         tv.tv_sec = 30;
         tv.tv_usec = 0;
         /* zero out connection on sockfd if there is any */
@@ -86,7 +86,7 @@ int runServer(int PortNum)
         /* descriptor to fd_set */
         g_tree_foreach(connectionList, (GTraverseFunc)iter_add_to_fd_set, &readFdSet);
 
-        activity = select(sockFd+1, &readFdSet, 0, 0, &tv);
+        activity = select(sockFd+3, &readFdSet, 0, 0, &tv);
 
         if (activity < 0 && errno != EINTR)
         {
@@ -96,7 +96,7 @@ int runServer(int PortNum)
 
         /* Check if the main socket is active then we have an */
         /* incoming connection */
-        if (FD_ISSET(sockFd, &readFdSet))
+        if (FD_ISSET(sockFd, &readFdSet) && activity > 0)
         {
             struct sockaddr_in *client = g_new0(struct sockaddr_in, 1);
             socklen_t clienLength = (socklen_t) sizeof(client);

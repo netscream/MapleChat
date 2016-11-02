@@ -38,10 +38,12 @@ int runClient(const char* serverIP, const int portNum)
                 FD_ZERO(&rfds);
                 FD_SET(STDIN_FILENO, &rfds);
                 FD_SET(exitfd[0], &rfds);
+		FD_SET(server_fd, &rfds);
                 timeout.tv_sec = 5;
                 timeout.tv_usec = 0;
-
-                int r = select(exitfd[0] + 1, &rfds, NULL, NULL, &timeout);
+		//debugD("serverfd = ", server_fd);
+		//debugD("exitfd = ", exitfd[0]);
+                int r = select(exitfd[0] + 3, &rfds, NULL, NULL, &timeout);
                 if (r < 0) {
                         if (errno == EINTR) {
                                 /* This should either retry the call or
@@ -85,12 +87,18 @@ int runClient(const char* serverIP, const int portNum)
                 }
 
                 /* Handle messages from the server here! */
+		if (FD_ISSET(server_fd, &rfds)) {
+			debugS("getting messages from server");
+			char message[512];
+			memset(&message, 0, sizeof(message));
+			SSL_read(server_ssl, message, sizeof(message));
+			printf("%s", message);
+		}
         }
 
         /* replace by code to shutdown the connection and exit
            the program. */
 }
-
 /*
  * Function that serves only to connect to the server we intent to use.
  *
@@ -107,7 +115,7 @@ void connectToServer(const char* server, const int portNum)
         perror("Socket error: ");
         exit(EXIT_FAILURE);
     }
-
+    
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(portNum);
     inet_pton(AF_INET, server, &serverAddr.sin_addr);
@@ -253,7 +261,8 @@ void readline_callback(char *line)
         }
         if (strncmp("/list", line, 5) == 0) {
             debugS("Requesting list");
-            if (SSL_write(server_ssl, "LIST", 4) == -1)
+	     
+            if (SSL_write(server_ssl, "LIST", strlen("LIST")) == -1)
             {
                 debugS("SSL_WRITE error:");
                 ERR_print_errors_fp(stderr);
