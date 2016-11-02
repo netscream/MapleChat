@@ -6,6 +6,10 @@ gboolean iter_connections(gpointer key, gpointer value, gpointer data) {
     if (FD_ISSET(user->fd, (fd_set *)data))
     {
         printf("Socket %d is active\n", user->fd);
+	char message[512]; 
+	memset(message, 0, sizeof(message));
+	SSL_read(user->sslFd, message, sizeof(message));
+	printf("Skilaboðin voru -> %s \n", message);
     }
     else
     {
