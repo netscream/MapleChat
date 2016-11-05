@@ -30,7 +30,8 @@ GTree *usersOnServerList;
 /* end of grees for implementation*/
 
 /* Structures to be used for users */
-struct userInformation {
+struct userInformation 
+{
     SSL *sslFd;
     int fd;
     char *username;
@@ -39,6 +40,13 @@ struct userInformation {
     int count_logins;
     time_t login_timeout;
 };
+
+struct room_information 
+{
+	char* room_name;
+	GList *user_list;
+};
+
 typedef struct userInformation UserI;
 /* end of structures for the users */
 
@@ -54,6 +62,7 @@ int initalize_server(const int port_num, struct sockaddr_in server);
 SSL_CTX* initialize_open_SSL_cert();
 int sockaddr_in_cmp(const void *addr1, const void *addr2);
 gint fd_cmp(gconstpointer fd1,  gconstpointer fd2, gpointer G_GNUC_UNUSED data);
+gint room_name_cmp(gconstpointer A,  gconstpointer B, gpointer G_GNUC_UNUSED data);
 void logger(struct sockaddr_in *client, int type);
 void initialize_user_struct(struct userInformation *new_user);
 #endif

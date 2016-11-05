@@ -80,13 +80,13 @@ int run_server(int port_num)
 
     /* Allow multiple binds on main socket, this prevents blocking when debugging */
     if(setsockopt(sockFd, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0) {
-        error("setsockopt");
+        perror("setsockopt");
         return 1;
     }
 
     /* Initialize connectionList */
-    connectionList = g_tree_new((GCompareFunc)fd_cmp);
-
+    connectionList = g_tree_new((GCompareFunc) fd_cmp);
+    roomsOnServerList = g_tree_new((GCompareFunc) room_name_cmp);
     while(1)
     {
         fd_set readFdSet;
@@ -179,7 +179,7 @@ int run_server(int port_num)
         g_tree_foreach(connectionList, (GTraverseFunc)iter_connections, &readFdSet);
     }
     /* exit server */
-    printToOutput("Server exiting\n", 15);
+    print_to_output("Server exiting\n", 15);
     g_tree_destroy(connectionList);
     g_tree_destroy(roomsOnServerList);
     g_tree_destroy(usersOnServerList);
@@ -310,9 +310,14 @@ int sockaddr_in_cmp(const void *addr1, const void *addr2)
 
 /* This can be used to build instances of GTree that index on
    the file descriptor of a connection. */
-gint fd_cmp(gconstpointer fd1,  gconstpointer fd2, gpointer G_GNUC_UNUSED data)
+gint fd_cmp(gconstpointer user1,  gconstpointer user2, gpointer G_GNUC_UNUSED data)
 {
-    return GPOINTER_TO_INT(fd1) - GPOINTER_TO_INT(fd2);
+    return GPOINTER_TO_INT(((UserI*) user1)->fd) - GPOINTER_TO_INT(((UserI*) user2)->fd);
+}
+
+gint room_name_cmp(gconstpointer A,  gconstpointer B, gpointer G_GNUC_UNUSED data)
+{
+    return g_strcmp0(((struct room_information*) A)->room_name, ((struct room_information*)B)->room_name);
 }
 
 void logger(struct sockaddr_in *client, int type)
