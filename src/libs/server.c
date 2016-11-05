@@ -95,10 +95,10 @@ void process_message(char* message, struct userInformation* user)
     else if(g_strcmp0("WHO", command[0]) == 0)
     {
         printf("User requested list of users\n");
-        gchar* list_of_users = g_strdup("helo");
+        gchar* list_of_users = g_strdup("");
         debug_s(list_of_users);
-        g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_rooms_or_users, (gpointer) list_of_users);
-        if (list_of_users != NULL)
+        g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_rooms_or_users, (gpointer) &list_of_users);
+        if (g_strcmp0("", list_of_users) != 0)
         {
             debug_s(list_of_users);
             SSL_write(user->sslFd, list_of_users, strlen(list_of_users));
@@ -158,16 +158,9 @@ gboolean iter_rooms_or_users(gpointer key, gpointer value, gpointer data)
     SSL_write(user_ssl, temp->room_name, strlen(temp->room_name));*/
     if (key != NULL)
     {
-        if ((gchar*) data == NULL)
-        {
-            data = (gpointer) g_strdup((gchar*) key);
-        }
-        else
-        {
-            gchar* tmp = g_strjoin(",", (gchar*) data, (gchar*) key);
-            g_free((gchar*) data);
-            data = (gpointer) tmp;
-        }
+        gchar* tmp = g_strjoin(",", *((gchar**) data), (gchar*) key, NULL);
+        g_free(*((gchar**) data));
+        *((gchar**) data) = (gpointer) tmp;
     }
     return 0;
 }
