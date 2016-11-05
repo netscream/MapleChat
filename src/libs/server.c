@@ -84,10 +84,13 @@ void process_message(char* message, struct userInformation* user)
     else if(g_strcmp0("LIST", command[0]) == 0)
     {
         debug_s("User requested list of chat rooms\n");
-        gchar* list_of_chans = NULL;
-        g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms_or_users, (gpointer) list_of_chans);
-        if (list_of_chans != NULL)
+        gchar* list_of_chans = g_strdup("");
+        g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms_or_users, (gpointer) &list_of_chans);        
+        if (g_strcmp0("", list_of_chans) != 0)
         {
+            debug_s(list_of_chans);
+            gchar* tmp = g_strconcat("Users on server: ", list_of_chans, "\n", NULL);
+            g_free(list_of_chans);
             SSL_write(user->sslFd, list_of_chans, strlen(list_of_chans));
         }
 
@@ -98,7 +101,7 @@ void process_message(char* message, struct userInformation* user)
         if(user->current_room != NULL)
         {
             struct room_information* tmp_room = user->current_room;
-            tmp_room->user_list = g_list_remove(user->current_room->user_list,user->username);
+            tmp_room->user_list = g_list_remove(tmp_room->user_list,user->username);
             if (g_list_length(tmp_room->user_list) == 0)
             {
                 g_list_free(tmp_room->user_list);
@@ -111,7 +114,7 @@ void process_message(char* message, struct userInformation* user)
         printf("joining this room  %s\n",command[1]);
         RoomI *room = NULL;
         debug_s(command[1]);
-        room = g_tree_lookup(roomsOnServerList,command[1]);
+        room = g_tree_lookup(roomsOnServerList, command[1]);
         debug_s("Done looking \n");
         if(room  == NULL)
         {
@@ -119,7 +122,7 @@ void process_message(char* message, struct userInformation* user)
             room->room_name = command[1];
             room->user_list = g_list_append(room->user_list,user);
             debug_s("new room created  \n");
-            g_tree_insert(roomsOnServerList,room->room_name,room);
+            g_tree_insert(roomsOnServerList, (gchar*) room->room_name, room);
             debug_s("done creating/found room \n");
         }    
         else
@@ -136,12 +139,13 @@ void process_message(char* message, struct userInformation* user)
     {
         printf("User requested list of users\n");
         gchar* list_of_users = g_strdup("");
-        debug_s(list_of_users);
         g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_rooms_or_users, (gpointer) &list_of_users);
         if (g_strcmp0("", list_of_users) != 0)
         {
             debug_s(list_of_users);
-            SSL_write(user->sslFd, list_of_users, strlen(list_of_users));
+            gchar* tmp = g_strconcat("Users on server: ", list_of_users, "\n", NULL);
+            g_free(list_of_users);
+            SSL_write(user->sslFd, tmp, strlen(tmp));
         }
     }
     else if(g_strcmp0("PRIVMSG", command[0]) == 0)
@@ -196,15 +200,20 @@ gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data)
 
 gboolean iter_rooms_or_users(gpointer key, gpointer value, gpointer data)
 {
-    /*SSL* user_ssl = ((UserI*) data)->sslFd;
-    struct room_information* temp = (struct room_information*) value;
-    debug_s(temp->room_name);
-    SSL_write(user_ssl, temp->room_name, strlen(temp->room_name));*/
-    if (key != NULL)
+    if (key != NULL && value != NULL)
     {
-        gchar* tmp = g_strjoin(",", *((gchar**) data), (gchar*) key, NULL);
-        g_free(*((gchar**) data));
-        *((gchar**) data) = (gpointer) tmp;
+        printf("USERNASD = %s\n", (char*) key);
+        if (g_strcmp0("", *((gchar**) data)) == 0)
+        {
+            g_free(*((gchar**) data));
+            *((gchar**) data) = (gpointer) g_strdup((gchar*) key);
+        }
+        else
+        {
+            gchar* tmp = g_strjoin(",", *((gchar**) data), (gchar*) key, NULL);
+            g_free(*((gchar**) data));
+            *((gchar**) data) = (gpointer) tmp;
+        }
     }
     return 0;
 }

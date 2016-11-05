@@ -44,17 +44,17 @@ SSL_CTX* theSSLctx;
 /* This variable shall point to the name of the user. The initial value
    is NULL. Set this variable to the username once the user managed to be
    authenticated. */
-static char *user;
+static char *user_name = NULL;
 
 /* This variable shall point to the name of the chatroom. The initial
    value is NULL (not member of a chat room). Set this variable whenever
    the user changed the chat room successfully. */
-static char *chatroom;
+static char *chat_room = NULL;
 
 /* This prompt is used by the readline library to ask the user for
  * input. It is good style to indicate the name of the user and the
  * chat room he is in as part of the prompt. */
-static char *prompt;
+static char *prompt = NULL;
 
 int run_client(const char* server_ip, const int port_num);
 void connect_to_server(const char* server, const int port_num);

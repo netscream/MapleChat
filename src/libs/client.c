@@ -73,7 +73,21 @@ int run_client(const char* server_ip, const int port_num)
                 perror("SSL read error: ");
             }
             printf("%s\n", message);
-
+            for (;;)
+            {
+                    if (read(exitfd[0], &signum, sizeof(signum)) == -1) 
+                    {
+                            if (errno == EAGAIN) 
+                            {
+                                    break;
+                            } 
+                            else 
+                            {
+                                    perror("read()");
+                                    exit(EXIT_FAILURE);
+                            }
+                    }
+            }
             if (signum == SIGINT) {
                 /* Don't do anything. */
             } else if (signum == SIGTERM || signum == SIGQUIT) {
@@ -264,6 +278,7 @@ void readline_callback(char *line)
             return;
         }
         char *chatroom = strdup(&(line[i]));
+        chat_room = chatroom;
         gchar* request = g_strconcat("JOIN ", chatroom, NULL);
         if (SSL_write(server_ssl, request, strlen(request)) == -1)
         {
@@ -345,7 +360,7 @@ void readline_callback(char *line)
         rl_redisplay();
 
         /* Process and send this information to the server. */
-
+        user_name = new_user;
         gchar* request = g_strconcat("USER ", new_user, NULL);
         if (SSL_write(server_ssl, request, strlen(request)) == -1)
         {
