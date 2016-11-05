@@ -244,15 +244,18 @@ void readline_callback(char *line)
         signal_handler(SIGTERM);
         return;
     }
+    
     if (strlen(line) > 0) {
         add_history(line);
     }
+    
     if ((strncmp("/bye", line, 4) == 0) ||
             (strncmp("/quit", line, 5) == 0)) {
         rl_callback_handler_remove();
         signal_handler(SIGTERM);
         return;
     }
+    else
     if (strncmp("/game", line, 5) == 0) {
         /* Skip whitespace */
         int i = 4;
@@ -267,6 +270,7 @@ void readline_callback(char *line)
         /* Start game */
         return;
     }
+    else
     if (strncmp("/join", line, 5) == 0) {
         int i = 5;
         /* Skip whitespace */
@@ -294,6 +298,7 @@ void readline_callback(char *line)
         rl_set_prompt(prompt);
         return;
     }
+    else
     if (strncmp("/list", line, 5) == 0) {
         debug_s("Requesting list");
 
@@ -305,10 +310,12 @@ void readline_callback(char *line)
         /* Query all available chat rooms */
         return;
     }
+    else
     if (strncmp("/roll", line, 5) == 0) {
         /* roll dice and declare winner. */
         return;
     }
+    else
     if (strncmp("/say", line, 4) == 0) {
         /* Skip whitespace */
         int i = 4;
@@ -343,6 +350,7 @@ void readline_callback(char *line)
         }
         return;
     }
+    else
     if (strncmp("/user", line, 5) == 0) {
         int i = 5;
         /* Skip whitespace */
@@ -376,6 +384,7 @@ void readline_callback(char *line)
         rl_set_prompt(prompt);
         return;
     }
+    else
     if (strncmp("/who", line, 4) == 0) {
         /* Query all available users */
         if (SSL_write(server_ssl, "WHO", strlen("WHO")) == -1)
@@ -385,8 +394,12 @@ void readline_callback(char *line)
         }
         return;
     }
-    /* Sent the buffer to the server. */
-    snprintf(buffer, 255, "Message: %s\n", line);
+    else
+    {
+        /* Sent the buffer to the server. */
+        snprintf(buffer, 255, "Message: %s\n", line);
+        SSL_write(server_ssl, buffer, strlen(buffer));
+    }
     write(STDOUT_FILENO, buffer, strlen(buffer));
     fsync(STDOUT_FILENO);
 }

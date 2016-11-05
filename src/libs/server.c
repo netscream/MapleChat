@@ -185,7 +185,7 @@ void process_message(char* message, struct userInformation* user)
         {
             room = g_new0(RoomI,1);
             room->room_name = g_strdup(command[1]);
-            room->user_list = g_list_append(room->user_list,user);
+            room->user_list = g_list_append(room->user_list, user->username);
             debug_s("new room created  \n");
             g_tree_insert(roomsOnServerList, (gchar*) room->room_name, room);
             debug_s("done creating/found room \n");
@@ -202,7 +202,7 @@ void process_message(char* message, struct userInformation* user)
     }
     else if(g_strcmp0("WHO", command[0]) == 0)
     {
-        printf("User requested list of users\n");
+        debug_s("User requested list of users\n");
         gchar* list_of_users = g_strdup("");
         g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_rooms_or_users, (gpointer) &list_of_users);
         if (g_strcmp0("", list_of_users) != 0)
@@ -215,12 +215,31 @@ void process_message(char* message, struct userInformation* user)
     }
     else if(g_strcmp0("PRIVMSG", command[0]) == 0)
     {
-        printf("User sending private message\n");
+        debug_s("User sending private message\n");
         struct communication_message tmp;
         tmp.from_user = (gchar*) user->username;
         tmp.to_user = command[1];
         tmp.message = data;
         g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_users_privmsg, (gpointer) &tmp);
+    }
+    else /* lets assume everything else is a message to channel */
+    {
+        debug_s("User sending message to channel\n");
+        struct room_information* user_room = user->current_room;
+        gchar* send_message = g_strconcat(user_room->room_name, " ", "<", user->username ,">:", data, NULL);
+        GList *tmp = user_room->user_list;
+        while (tmp != NULL)
+        {
+            struct userInformation* tmpUser = NULL;
+            debug_s(tmp->data);
+            tmpUser = g_tree_search(usersOnServerList, (GCompareFunc) g_ascii_strcasecmp, (gchar*) tmp->data);
+            if (tmpUser != NULL)
+            {
+                SSL_write(tmpUser->sslFd, send_message, strlen(send_message));
+            }
+            tmp = g_list_next(tmp);
+        }
+        g_free(send_message);
     }
 
     g_strfreev(msg);
@@ -267,7 +286,6 @@ gboolean iter_rooms_or_users(gpointer key, gpointer value, gpointer data)
 {
     if (key != NULL && value != NULL)
     {
-        printf("USERNASD = %s\n", (char*) key);
         if (g_strcmp0("", *((gchar**) data)) == 0)
         {
             g_free(*((gchar**) data));
