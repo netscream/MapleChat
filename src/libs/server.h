@@ -35,6 +35,7 @@ GKeyFile *keyfile;
 /* Structures to be used for users */
 struct userInformation
 {
+	gpointer key;
     SSL *sslFd;
     int fd;
     char *username;
@@ -49,6 +50,7 @@ typedef struct userInformation UserI;
 
 struct room_information
 {
+	gpointer key;
     char* room_name;
     GList *user_list;
 };

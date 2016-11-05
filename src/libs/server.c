@@ -96,25 +96,34 @@ void process_message(char* message, struct userInformation* user)
         debug_s("user wants to join \n");
         if(user->current_room != NULL)
         {
-            user->current_room->user_list = g_list_remove(user->current_room->user_list,user->username);
+            struct room_information* tmp_room = user->current_room;
+            tmp_room->user_list = g_list_remove(user->current_room->user_list,user->username);
+            if (g_list_length(tmp_room->user_list) == 0)
+            {
+                g_list_free(tmp_room->user_list);
+                g_tree_remove(roomsOnServerList, (gpointer) tmp_room->key);
+                g_free(tmp_room);
+            }
             user->current_room = NULL;
+            debug_s("Old room removed \n");
         }
-        debug_s("Old room removed \n");
         printf("joining this room  %s\n",command[1]);
         RoomI *room = NULL;
-        room = g_tree_lookup(roomsOnServerList,command[1]);
-        printf("joining this room  %s\n",room);
+        debug_s(command[1]);
+        room = g_tree_lookup(roomsOnServerList,(gconstpointer) command[1]);
         debug_s("Done looking \n");
         if(room  == NULL)
         {
-            RoomI *room = g_new0(RoomI,1);
+            room = g_new0(RoomI,1);
             room->room_name = command[1];
+            room->key = (gpointer) room->room_name;
             room->user_list = g_list_append(room->user_list,user);
             debug_s("new room created  \n");
-            g_tree_insert(roomsOnServerList,room->room_name,room);
+            g_tree_insert(roomsOnServerList,room->key,room);
         }    
         debug_s("done creating/found room \n");
-        user->current_room = room;
+        user->current_room = (struct room_information*) room;
+        debug_s(user->current_room->room_name);
         printf("joined this room, %s\n",command[1]);
     
     }
