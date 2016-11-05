@@ -145,7 +145,6 @@ int run_server(int port_num)
                 if (sslErr > 0)
                 {
                     debug_s("STUFF");
-                    //logger((struct sockaddr_in*) client, 0); //report connection to console
                     UserI *new_user = g_new0(UserI, 1); //create new User struct
                     initialize_user_struct(new_user);
                     new_user->sslFd = sslclient;
@@ -157,7 +156,7 @@ int run_server(int port_num)
                         debug_s("SSL_WRITE error:");
                         ERR_print_errors_fp(stderr);
                     }
-                    log_to_console(*client, "connected");
+                    log_to_console(&client, "connected");
                     continue;
                 }
                 else if (sslErr <= 0 || sslErr > 1)

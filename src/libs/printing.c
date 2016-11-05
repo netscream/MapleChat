@@ -87,21 +87,23 @@ void get_header_time(char* buffer, int mode)
  * Function logToConsole
  * For client connection logging
  */
-void log_to_console(struct sockaddr_in client_addr, char *connection_state)
+void log_to_console(struct sockaddr_in *client_addr, char *connection_state)
 {
     debug_s("Logging to file");
     int len = 20;
     char cl_bugg[len];
+    memset(&cl_bugg, 0, len);
     char buffer[512];
     memset(&buffer, 0, 512);
     char the_time[21];
+    memset(&the_time, 0, 21);
     char port_id[2];
-    sprintf(port_id,"%d", ntohs(client_addr.sin_port));
+    sprintf(port_id,"%d", ntohs(client_addr->sin_port));
     get_header_time(the_time, 2);
     debug_s("Creating buffer");
     strcat(buffer, the_time); //time ISO-8601 compliant
     strcat(buffer, " : ");
-    strcat(buffer, inet_ntop(AF_INET, &(client_addr.sin_addr), cl_bugg, len)); //ip address
+    strcat(buffer, inet_ntop(AF_INET, &(client_addr->sin_addr), cl_bugg, len)); //ip address
     strcat(buffer, ":");
     strcat(buffer, port_id); //port
     strcat(buffer, " ");
