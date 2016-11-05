@@ -11,4 +11,5 @@ void print_to_output_error(char* message, struct sockaddr_in client_addr);
 void print_banner();
 void get_header_time(char* buffer, int mode);
 void log_to_console(struct sockaddr_in *client_addr, char *connection_state);
+void print_SSL_error(int err);
 #endif

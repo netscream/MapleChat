@@ -114,3 +114,39 @@ void log_to_console(struct sockaddr_in *client_addr, char *connection_state)
     debug_s("Returning from logtofile");
     return;
 }
+
+void print_SSL_error(int err)
+{
+    switch (err)
+    {
+        case SSL_ERROR_NONE: // Success
+            break;
+        case SSL_ERROR_SSL:
+            printf("SSL_ERROR_SSL:\n");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+        case SSL_ERROR_WANT_READ:
+            printf ("SSL_ERROR_WANT_READ:\n");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+        case SSL_ERROR_WANT_WRITE:
+            printf("SSL_ERROR_WANT_WRITE:\n");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+        case SSL_ERROR_WANT_CONNECT:
+            printf("SSL_ERROR_WANT_CONNECT:\n");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+        case SSL_ERROR_SYSCALL:
+            printf("SSL_ERROR_SYSCALL:\n");
+            exit(1);
+        case SSL_ERROR_ZERO_RETURN:
+            printf("SSL_ERROR_SYSCALL:\n");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+        default:
+            printf("Unknown error:");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+    }
+}

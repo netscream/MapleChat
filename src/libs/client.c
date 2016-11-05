@@ -1,17 +1,17 @@
 #include "client.h"
 
-int runClient(const char* serverIP, const int portNum)
+int run_client(const char* server_ip, const int port_num)
 {
     debug_s("Run client");
     theSSLctx = NULL;
     initialize_exitfd();
-    initializeOpenSSLCert();
+    initialize_openSSL_cert();
     if (theSSLctx == NULL)
     {
         printf("CTX = NULL");
         exit(1);
     }
-    connectToServer(serverIP, portNum);
+    connect_to_server(server_ip, port_num);
 
     debug_s("SSL connect");
     /* Now we can create BIOs and use them instead of the socket.
@@ -117,9 +117,9 @@ int runClient(const char* serverIP, const int portNum)
  * Function that serves only to connect to the server we intent to use.
  *
  */
-void connectToServer(const char* server, const int portNum)
+void connect_to_server(const char* server, const int port_num)
 {
-    debug_s("Inside connectToServer\n");
+    debug_s("Inside connect_to_server\n");
     int sslErr = -1;
     memset(&serverAddr, '\0', sizeof(serverAddr));
 
@@ -131,7 +131,7 @@ void connectToServer(const char* server, const int portNum)
     }
 
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(portNum);
+    serverAddr.sin_port = htons(port_num);
     inet_pton(AF_INET, server, &serverAddr.sin_addr);
 
     connect(server_fd, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
@@ -148,7 +148,7 @@ void connectToServer(const char* server, const int portNum)
     if (sslErr <= 0 || sslErr == 2)
     {
         debug_s("SSL connect error:");
-        printSSLError(SSL_get_error(server_ssl, sslErr));
+        print_SSL_error(SSL_get_error(server_ssl, sslErr));
     }
 
 }
@@ -363,7 +363,7 @@ void readline_callback(char *line)
     fsync(STDOUT_FILENO);
 }
 
-void initializeOpenSSLCert()
+void initialize_openSSL_cert()
 {
     debug_s("Initialize openssl");
     /* Initialize OpenSSL */
@@ -400,38 +400,3 @@ void initializeOpenSSLCert()
      */
 }
 
-void printSSLError(int err)
-{
-    switch (err)
-    {
-        case SSL_ERROR_NONE: // Success
-            break;
-        case SSL_ERROR_SSL:
-            printf("SSL_ERROR_SSL:\n");
-            ERR_print_errors_fp(stderr);
-            exit(1);
-        case SSL_ERROR_WANT_READ:
-            printf ("SSL_ERROR_WANT_READ:\n");
-            ERR_print_errors_fp(stderr);
-            exit(1);
-        case SSL_ERROR_WANT_WRITE:
-            printf("SSL_ERROR_WANT_WRITE:\n");
-            ERR_print_errors_fp(stderr);
-            exit(1);
-        case SSL_ERROR_WANT_CONNECT:
-            printf("SSL_ERROR_WANT_CONNECT:\n");
-            ERR_print_errors_fp(stderr);
-            exit(1);
-        case SSL_ERROR_SYSCALL:
-            printf("SSL_ERROR_SYSCALL:\n");
-            exit(1);
-        case SSL_ERROR_ZERO_RETURN:
-            printf("SSL_ERROR_SYSCALL:\n");
-            ERR_print_errors_fp(stderr);
-            exit(1);
-        default:
-            printf("Unknown error:");
-            ERR_print_errors_fp(stderr);
-            exit(1);
-    }
-}

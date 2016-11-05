@@ -54,11 +54,11 @@ static char *chatroom;
  * chat room he is in as part of the prompt. */
 static char *prompt;
 
-int runClient(const char* serverIP, const int portNum);
-void connectToServer(const char* server, const int portNum);
+int run_client(const char* server_ip, const int port_num);
+void connectToServer(const char* server, const int port_num);
 void signal_handler(int signum);
 static void initialize_exitfd(void);
 void readline_callback(char *line);
-void initializeOpenSSLCert();
+void initialize_openSSL_cert();
 void printSSLError(int err);
 #endif
