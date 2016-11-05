@@ -71,7 +71,13 @@ void process_message(char* message, struct userInformation* user)
     else if(g_strcmp0("LIST", command[0]) == 0)
     {
         debug_s("User requested list of chat rooms\n");
-        g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms, (gpointer) user);
+        gchar* list_of_chans = NULL;
+        g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms, (gpointer) list_of_chans);
+        if (list_of_chans != NULL)
+        {
+            SSL_write(user->sslFd, list_of_chans, strlen(list_of_chans));
+        }
+
     }
     else
     if(g_strcmp0("WHO", command[0]) == 0)
@@ -82,7 +88,7 @@ void process_message(char* message, struct userInformation* user)
     if(g_strcmp0("PRIVMSG", command[0]) == 0)
     {
         printf("User sending private message\n");
-
+        g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_users_privmsg, (gpointer) data);
     }
     
 }
@@ -126,20 +132,34 @@ gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data)
 
 gboolean iter_rooms(gpointer key, gpointer value, gpointer data)
 {
-    SSL* user_ssl = ((UserI*) data)->sslFd;
+    /*SSL* user_ssl = ((UserI*) data)->sslFd;
     struct room_information* temp = (struct room_information*) value;
     debug_s(temp->room_name);
-    SSL_write(user_ssl, temp->room_name, strlen(temp->room_name));
+    SSL_write(user_ssl, temp->room_name, strlen(temp->room_name));*/
+    if (key != NULL)
+    {
+        if ((gchar*) data == NULL)
+        {
+            data = (gpointer) g_strdup((gchar*) key);
+        }
+        else
+        {
+            gchar* tmp = g_strjoin(",", (gchar*) data, (gchar*) key);
+            g_free((gchar*) data);
+            data = (gpointer) tmp;
+        }
+    }
     return 0;
 }
 
 gboolean iter_users_privmsg(gpointer key, gpointer value, gpointer data)
 {
-    UserI* temp = (UserI*) value;
-    char* temp_string = (char*) data;
-    if (g_strcmp0(temp_string[0], temp->username) == 0)
+    char** temp_string = (char*) data;
+    if (g_strcmp0(temp_string[0], (char*) key) == 0)
     {
+        UserI* temp = (UserI*) value;
         char* send_string = (char*) temp_string[1];
+        SSL_write(temp->sslFd, temp_string[1], strlen(temp_string[1]));
         return 1;
     }
     return 0;
@@ -478,5 +498,5 @@ void initialize_user_struct(struct userInformation *new_user)
 
 int send_to_user_message(struct userInformation user, char* message)
 {
-
+    return 0;
 }
