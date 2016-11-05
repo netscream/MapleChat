@@ -309,11 +309,17 @@ void readline_callback(char *line)
             rl_redisplay();
             return;
         }
-        char *receiver = strndup(&(line[i]), j - i - 1);
-        char *message = strndup(&(line[j]), j - i - 1);
+        char *receiver = strndup(&(line[i]), j - i);
+        char *message = strdup(&(line[j]));
 
         /* Send private message to receiver. */
-
+        gchar* send_message = g_strconcat("PRIVMSG ", receiver, ":", message, NULL);
+        debug_s(send_message);
+        if (SSL_write(server_ssl, send_message, strlen(send_message)) == -1)
+        {
+            debug_s("SSL_WRITE error:");
+            ERR_print_errors_fp(stderr);
+        }
         return;
     }
     if (strncmp("/user", line, 5) == 0) {

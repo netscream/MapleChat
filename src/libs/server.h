@@ -58,6 +58,13 @@ struct iterArguments {
     fd_set* readFdSet;
     int* max_fd;
 };
+
+struct communication_message {
+	gchar* from_user;
+	gchar* to_user;
+	gchar* message;
+};
+
 typedef struct iterArguments iterArgs;
 
 int run_server(int port_num);

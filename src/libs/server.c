@@ -107,7 +107,11 @@ void process_message(char* message, struct userInformation* user)
     else if(g_strcmp0("PRIVMSG", command[0]) == 0)
     {
         printf("User sending private message\n");
-        g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_users_privmsg, (gpointer) data);
+        struct communication_message tmp;
+        tmp.from_user = (gchar*) user->username;
+        tmp.to_user = command[1];
+        tmp.message = data;
+        g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_users_privmsg, (gpointer) &tmp);
     }
 
     g_strfreev(msg);
@@ -167,12 +171,15 @@ gboolean iter_rooms_or_users(gpointer key, gpointer value, gpointer data)
 
 gboolean iter_users_privmsg(gpointer key, gpointer value, gpointer data)
 {
-    char** temp_string = (char*) data;
-    if (g_strcmp0(temp_string[0], (char*) key) == 0)
+    gchar* to_user = ((struct communication_message*) data)->to_user;
+    debug_s(to_user);
+    if (g_strcmp0((gchar*) to_user, (gchar*) key) == 0)
     {
         UserI* temp = (UserI*) value;
-        char* send_string = (char*) temp_string[1];
-        SSL_write(temp->sslFd, temp_string[1], strlen(temp_string[1]));
+        gchar* send_string = g_strconcat("Privmsg from ", ((struct communication_message*) data)->from_user, " => ", ((struct communication_message*) data)->message, NULL);
+        debug_s(send_string);
+        SSL_write(temp->sslFd, send_string, strlen(send_string));
+        g_free(send_string);
         return 1;
     }
     return 0;
