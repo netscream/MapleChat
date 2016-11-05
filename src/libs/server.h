@@ -29,6 +29,9 @@ GTree *roomsOnServerList;
 GTree *usersOnServerList;
 /* end of grees for implementation*/
 
+/* KeyFile to store passwords */
+GKeyFile *keyfile;
+
 /* Structures to be used for users */
 struct userInformation {
     SSL *sslFd;

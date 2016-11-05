@@ -1,5 +1,52 @@
 #include "server.h"
 
+gchar* user_get_hash(gchar* username)
+{
+    gchar *passwd64 = g_key_file_get_string(keyfile, "passwords",
+            username, NULL);
+    gsize length;
+
+    if( passwd64 == NULL )
+        return NULL;
+
+    gchar *passwd = g_base64_decode(passwd64, &length);
+    return passwd;
+}
+
+void user_set_hash(gchar* username, gchar* hash)
+{
+    gchar *hash64 = g_base64_encode(hash, strlen(hash));
+    g_key_file_set_string(keyfile, "passwords", username, hash64);
+    g_free(hash64);
+    /* gsize length; */
+    /* gchar *keyfile_string = g_key_file_to_data(keyfile, &length); */
+    /* write(fd, keyfile_string, length); */
+    /* g_free(keyfile_string); */
+}
+
+int user_authenticate(gchar* username, gchar* passwd)
+{
+    gchar* hash = user_get_hash(username);
+    if(hash == NULL)
+    {
+        /* New user, hash his password and store it */
+        user_set_hash(username, passwd);
+    }
+    else
+    {
+        /* Check if the given password matches the hash */
+        if(g_strcmp0(hash, passwd) == 0)
+        {
+            /* Authenticated */
+        }
+        else
+        {
+            /* Failed, can only happen 3 times until disconnect */
+        }
+    }
+
+}
+
 void process_message(char* message)
 {
     gchar** msg = g_strsplit(message, ":", 0);
@@ -8,14 +55,15 @@ void process_message(char* message)
     gchar** command = g_strsplit(msg[0], " ", 0);
 
     if(g_strcmp0("USER", command[0]) == 0)
-        printf("User logged in as %s with password %s\n", command[1], data);
+        user_authenticate(command[1], data);
     if(g_strcmp0("LIST", command[0]) == 0)
         printf("User requested list\n");
     if(g_strcmp0("WHO", command[0]) == 0)
         printf("User requested list of users\n");
 }
 
-gboolean iter_connections(gpointer key, gpointer value, gpointer data) {
+gboolean iter_connections(gpointer key, gpointer value, gpointer data)
+{
     UserI* user = (UserI* ) value;
 
     if (FD_ISSET(user->fd, (fd_set *)data))
@@ -37,7 +85,8 @@ gboolean iter_connections(gpointer key, gpointer value, gpointer data) {
     return 0;
 }
 
-gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data) {
+gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data)
+{
     UserI* user = (UserI* ) value;
     iterArgs* args = (iterArgs *) data;
 
@@ -79,13 +128,19 @@ int runServer(int PortNum)
     /* Run the server FOREVER */
 
     /* Allow multiple binds on main socket, this prevents blocking when debugging */
-    if(setsockopt(sockFd, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0) {
+    if(setsockopt(sockFd, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0)
+    {
         error("setsockopt");
         return 1;
     }
 
     /* Initialize connectionList */
     connectionList = g_tree_new((GCompareFunc)fd_cmp);
+
+    /* Load password file */
+    GKeyFile *keyfile = g_keyfile_new();
+    g_key_file_load_from_file(keyfile, "passwords.ini",
+            G_KEY_FILE_NONE, NULL);
 
     while(1)
     {
@@ -184,6 +239,8 @@ int runServer(int PortNum)
     g_tree_destroy(connectionList);
     g_tree_destroy(roomsOnServerList);
     g_tree_destroy(usersOnServerList);
+
+    g_key_file_free(keyfile);
 
     SSL_CTX_free(theSSLctx);
     ERR_remove_state(0);
