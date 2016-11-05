@@ -61,7 +61,7 @@ void debug_sockaddr(char* message, struct sockaddr_in client_addr)
     {
         int len = 20;
         char cl_bugg[len];
-        printTime();
+        print_time();
         fprintf(stdout, "[Debug] %s %s\n", message, inet_ntop(AF_INET, &(client_addr.sin_addr), cl_bugg, len));
         print_time();
         if (message[0] == 'S' || message[0] == 's')
@@ -103,7 +103,7 @@ void debug_gmessage(gchar** message, size_t m_size)
     {
         if (message != NULL)
         {
-            printTime();
+            print_time();
             printf("[Debug] \n");
             for(size_t i = 0; i < m_size; i++)
             {

@@ -54,6 +54,8 @@ void print_banner()
     printf("------------------------------------------------\n");
     printf("|      OpenSSL chat server for tsam course     |\n");
     printf("|   Authors:                                   |\n");
+    printf("|   Arnar Páll Jóhannsson   <arnarpj15@ru.is>  |\n");
+    printf("|   Hlynur Óskar Guðmundsson<hlynur15@ru.is>   |\n");
     printf("|   Hlynur Hansen           <hlynur14@ru.is>   |\n");
     printf("------------------------------------------------\n");
 }
@@ -87,7 +89,7 @@ void get_header_time(char* buffer, int mode)
  */
 void log_to_console(struct sockaddr_in client_addr)
 {
-    debugS("Logging to file");
+    debug_s("Logging to file");
     int len = 20;
     char cl_bugg[len];
     char buffer[512];
@@ -95,8 +97,8 @@ void log_to_console(struct sockaddr_in client_addr)
     char the_time[21];
     char port_id[2];
     sprintf(port_id,"%d", ntohs(client_addr.sin_port));
-    getHeaderTime(the_time, 2);
-    debugS("Creating buffer");
+    get_header_time(the_time, 2);
+    debug_s("Creating buffer");
     strcat(buffer, the_time); //time ISO-8601 compliant
     strcat(buffer, " : ");
     strcat(buffer, inet_ntop(AF_INET, &(client_addr.sin_addr), cl_bugg, len)); //ip address
@@ -107,6 +109,6 @@ void log_to_console(struct sockaddr_in client_addr)
     strcat(buffer, "connected");
     strcat(buffer, "\n");
     printf("%s", buffer);
-    debugS("Returning from logtofile");
+    debug_s("Returning from logtofile");
     return;
 }
