@@ -4,9 +4,9 @@
  * Function printToOutput
  * for printing to output with a timestamp
  */
-void printToOutput(char* message, int length)
+void print_to_output(char* message, int length)
 {
-    printTime();
+    print_time();
     //fprintf(stdout, "[+] %s\n", message);
     fprintf(stdout, "[+] ");
     for (int i = 0; i < length; i++)
@@ -20,15 +20,15 @@ void printToOutput(char* message, int length)
  * Function printToOutputRequest
  * for printing to output from requests with a timestamp
  */
-void printToOutputSendHeader(char* header, int oneIfFromClient, struct sockaddr_in clientAddr)
+void print_to_output_send_header(char* header, int one_if_from_client, struct sockaddr_in client_addr)
 {
-    if (oneIfFromClient == 1)
+    if (one_if_from_client == 1)
     {
-        printf("Header from client %s:%d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
+        printf("Header from client %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
     }
     else
     {
-        printf("Header sent to client %s:%d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
+        printf("Header sent to client %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
     }
     printf("-------------------------\n");
 	printf("%s\n", header);
@@ -39,17 +39,17 @@ void printToOutputSendHeader(char* header, int oneIfFromClient, struct sockaddr_
  * Function printToOutput
  * for printing to output from errors with a timestamp
  */
-void printToOutputError(char* message, struct sockaddr_in clientAddr)
+void print_to_output_error(char* message, struct sockaddr_in client_addr)
 {
-    printTime();
-    fprintf(stdout, "[+] Error message: \"%s\" sent to %s:%d\n", message, inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
+    print_time();
+    fprintf(stdout, "[+] Error message: \"%s\" sent to %s:%d\n", message, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 }
 
 /*
  * Function printBanner
  * only for printing banner to stdout
  */
-void printBanner()
+void print_banner()
 {
     printf("------------------------------------------------\n");
     printf("|      OpenSSL chat server for tsam course     |\n");
@@ -65,7 +65,7 @@ void printBanner()
  *     1 = HEADER
  *     2 = logfile
  */
-void getHeaderTime(char* buffer, int mode)
+void get_header_time(char* buffer, int mode)
 {
     time_t timer = time(NULL); 
     struct tm *loctime;
@@ -79,4 +79,34 @@ void getHeaderTime(char* buffer, int mode)
     {
         strftime(buffer, 21, "%F %T", loctime); //hh:mm:ss
     }
+}
+
+/*
+ * Function logToConsole
+ * For client connection logging
+ */
+void log_to_console(struct sockaddr_in client_addr)
+{
+    debugS("Logging to file");
+    int len = 20;
+    char cl_bugg[len];
+    char buffer[512];
+    memset(&buffer, 0, 512);
+    char the_time[21];
+    char port_id[2];
+    sprintf(port_id,"%d", ntohs(client_addr.sin_port));
+    getHeaderTime(the_time, 2);
+    debugS("Creating buffer");
+    strcat(buffer, the_time); //time ISO-8601 compliant
+    strcat(buffer, " : ");
+    strcat(buffer, inet_ntop(AF_INET, &(client_addr.sin_addr), cl_bugg, len)); //ip address
+    strcat(buffer, ":");
+    strcat(buffer, port_id); //port
+    strcat(buffer, " ");
+    strcat(buffer, " : ");
+    strcat(buffer, "connected");
+    strcat(buffer, "\n");
+    printf("%s", buffer);
+    debugS("Returning from logtofile");
+    return;
 }

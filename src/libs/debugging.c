@@ -3,7 +3,7 @@
 /* 
  * Function to print time to output
  */
-void printTime()
+void print_time()
 {
     char buffer[13];
     time_t timer = time(NULL); 
@@ -15,11 +15,11 @@ void printTime()
 /*  Void function() for debugging
     Print string
 */
-void debugS(char* message)
+void debug_s(char* message)
 {
-    if (deBug)
+    if (debug)
     {
-        printTime();
+        print_time();
         fprintf(stdout, "[Debug] %s\n", message);
     }
     fflush(stdout);
@@ -29,12 +29,12 @@ void debugS(char* message)
  * void Function debugTwoS
  * For debugging 2 values from strings
  */
-void debugTwoS(char* outputMessage, char* outputValue)
+void debug_two_s(char* output_message, char* output_value)
 {
-    if (deBug)
+    if (debug)
     {
-        printTime();
-        fprintf(stdout, "[Debug] %s=%s\n", outputMessage, outputValue);
+        print_time();
+        fprintf(stdout, "[Debug] %s=%s\n", output_message, output_value);
     }
     fflush(stdout);
 }
@@ -42,11 +42,11 @@ void debugTwoS(char* outputMessage, char* outputValue)
 /* void function() 
  * for debugging decimal 
  */
-void debugD(char* message, int id)
+void debug_d(char* message, int id)
 {
-    if (deBug)
+    if (debug)
     {
-        printTime();
+        print_time();
         fprintf(stdout, "[Debug] %s %d\n", message, id);
     }
     fflush(stdout);
@@ -55,22 +55,22 @@ void debugD(char* message, int id)
 /* void function() 
  * for debugging hex 
  */
-void debugSockAddr(char* message, struct sockaddr_in clientAddr)
+void debug_sockaddr(char* message, struct sockaddr_in client_addr)
 {
-    if (deBug)
+    if (debug)
     {
         int len = 20;
-        char clBugg[len];
+        char cl_bugg[len];
         printTime();
-        fprintf(stdout, "[Debug] %s %s\n", message, inet_ntop(AF_INET, &(clientAddr.sin_addr), clBugg, len));
-        printTime();
+        fprintf(stdout, "[Debug] %s %s\n", message, inet_ntop(AF_INET, &(client_addr.sin_addr), cl_bugg, len));
+        print_time();
         if (message[0] == 'S' || message[0] == 's')
         {
-            printf("[Debug] Server port = %d\n", ntohs(clientAddr.sin_port));
+            printf("[Debug] Server port = %d\n", ntohs(client_addr.sin_port));
         }
         else
         {
-            printf("[Debug] Client port = %d\n", ntohs(clientAddr.sin_port));
+            printf("[Debug] Client port = %d\n", ntohs(client_addr.sin_port));
         }
         fflush(stdout);
     }
@@ -78,17 +78,17 @@ void debugSockAddr(char* message, struct sockaddr_in clientAddr)
 /* void debugMessage()
  * for debugging messages in TFTP server
  */
-void debugMessage(char* message, size_t mSize)
+void debug_message(char* message, size_t m_size)
 {   
-    if (deBug)
+    if (debug)
     {
-        printTime();
+        print_time();
         printf("[Debug] ");
-        for(size_t i = 0; i < mSize; i++)
+        for(size_t i = 0; i < m_size; i++)
         {
             printf("%c", message[i]);
         }
-        printf(" of size = %lu", mSize);
+        printf(" of size = %lu", m_size);
         printf("\n");
     } 
 }
@@ -97,46 +97,25 @@ void debugMessage(char* message, size_t mSize)
  * function debugGMessage
  * For debugging of double pointer message from glib
  */
-void debugGMessage(gchar** message, size_t mSize)
+void debug_gmessage(gchar** message, size_t m_size)
 {   
-    if (deBug)
+    if (debug)
     {
         if (message != NULL)
         {
             printTime();
             printf("[Debug] \n");
-            for(size_t i = 0; i < mSize; i++)
+            for(size_t i = 0; i < m_size; i++)
             {
                 printf("%s\n", message[i]);
                 //g_assert(g_printf("%s", message[i]));
             }
-            printf("\n of size = %lu", mSize);
+            printf("\n of size = %lu", m_size);
             printf("\n");
         }
     } 
 }
 
-/*
- * Function debugGHashTable
- * For hash table debugging
- */
-void debugGHashTable(GHashTable* theHashTable)
-{
-    if (deBug)
-    {
-        printTime();
-        printf("[Debug] HashTable list \n");
-        GHashTableIter elementIterator;
-        g_hash_table_iter_init(&elementIterator, theHashTable);
-        gpointer hashKey, hashValue;  //gpointer used because expecting void**
-        while(g_hash_table_iter_next(&elementIterator, &hashKey, &hashValue))
-        {
-            printf("key=%s and value=%s\n", (gchar*) hashKey, (gchar*) hashValue);
-        }
-        printTime();
-        printf("[Debug] End of HashTable list\n");
-    }
-}
 /*
     Debugging done
 */

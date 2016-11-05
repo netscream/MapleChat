@@ -12,18 +12,17 @@
  * Change this value to 1 (or something other than 0) to get debug function to work for tftp server 
  *
  */
-#define deBug 1
+#define debug 1
 
 /* 
  * Function to print timestamp to output
  */
-void printTime();
-void debugS(char* message);
-void debugTwoS(char* outputMessage, char* outputValue);
-void debugD(char* message, int id);
-void debugSockAddr(char* message, struct sockaddr_in clientAddr);
-void debugMessage(char* message, size_t mSize);
-void debugGMessage(gchar** message, size_t mSize);
-void debugGHashTable(GHashTable* theHashTable);
+void print_time();
+void debug_s(char* message);
+void debug_two_s(char* outputMessage, char* outputValue);
+void debug_d(char* message, int id);
+void debug_sockaddr(char* message, struct sockaddr_in clientAddr);
+void debug_message(char* message, size_t mSize);
+void debug_gmessage(gchar** message, size_t mSize);
 
 #endif
