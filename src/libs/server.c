@@ -7,14 +7,12 @@ gchar* user_get_hash(gchar* username)
     gchar *passwd64 = g_key_file_get_string(keyfile, "passwords",
             username, &error);
 
-    g_debug("%s", error->message);
-    gsize length;
-
     if( passwd64 == NULL )
     {
         return NULL;
     }
 
+    gsize length;
     gchar *passwd = g_base64_decode(passwd64, &length);
     return passwd;
 }
@@ -46,14 +44,15 @@ int user_authenticate(gchar* username, gchar* passwd)
         {
             debug_s("Password is correct");
             /* Authenticated */
+            return 1;
         }
         else
         {
             debug_s("Password is incorrect");
             /* Failed, can only happen 3 times until disconnect */
+            return 0;
         }
     }
-
 }
 
 void process_message(char* message, struct sockaddr_in* user)
@@ -65,8 +64,14 @@ void process_message(char* message, struct sockaddr_in* user)
 
     if(g_strcmp0("USER", command[0]) == 0)
     {
-        user_authenticate(command[1], data);
-        printf("User logged in as %s with password %s\n", command[1], data);
+        if(user_authenticate(command[1], data))
+        {
+            printf("User logged in as %s\n", command[1], data);
+        }
+        else
+        {
+            printf("Incorrect password for %s\n", command[1], data);
+        }
     }
     else if(g_strcmp0("LIST", command[0]) == 0)
     {
