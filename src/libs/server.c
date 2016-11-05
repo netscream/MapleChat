@@ -1,6 +1,6 @@
 #include "server.h"
 
-void process_message(char* message)
+void process_message(char* message, struct sockaddr_in* user)
 {
     gchar** msg = g_strsplit(message, ":", 0);
     gchar* data = msg[1];
@@ -8,14 +8,20 @@ void process_message(char* message)
     gchar** command = g_strsplit(msg[0], " ", 0);
 
     if(g_strcmp0("USER", command[0]) == 0)
+    {
         printf("User logged in as %s with password %s\n", command[1], data);
+    }
+    else
     if(g_strcmp0("LIST", command[0]) == 0)
     {
-        debug_s("User requested list\n");
-        //g_tree_foreach(roomsOnServerList, (GCompareFunc) iter_rooms, );
+        debug_s("User requested list of chat rooms\n");
+        g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms, (gpointer) user);
     }
+    else
     if(g_strcmp0("WHO", command[0]) == 0)
-        printf("User requested list of users\n");
+    {
+        printf("User requested list of users\n");   
+    }
 }
 
 gboolean iter_connections(gpointer key, gpointer value, gpointer data) {
@@ -28,7 +34,7 @@ gboolean iter_connections(gpointer key, gpointer value, gpointer data) {
         memset(message, 0, sizeof(message));
         SSL_read(user->sslFd, message, sizeof(message));
         printf("Message: %s\n", message);
-        process_message(message);
+        process_message(message , (struct sockaddr_in*) user);
     }
     else
     {
