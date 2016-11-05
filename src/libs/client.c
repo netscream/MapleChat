@@ -328,12 +328,12 @@ void readline_callback(char *line)
         }
         char *new_user = strdup(&(line[i]));
 
-        /* char passwd[48]; */
-        /* getpasswd("Password: ", passwd, 48); */
+        char passwd[48];
+        getpasswd("Password: ", passwd, 48);
 
         /* Process and send this information to the server. */
 
-        gchar* request = g_strconcat("USER ", new_user, NULL);
+        gchar* request = g_strconcat("USER ", new_user, ":", passwd, NULL);
         if (SSL_write(server_ssl, request, strlen(request)) == -1)
         {
             debugS("SSL_WRITE error:");
@@ -350,6 +350,11 @@ void readline_callback(char *line)
     }
     if (strncmp("/who", line, 4) == 0) {
         /* Query all available users */
+        if (SSL_write(server_ssl, "WHO", strlen("WHO")) == -1)
+        {
+            debugS("SSL_WRITE error:");
+            ERR_print_errors_fp(stderr);
+        }
         return;
     }
     /* Sent the buffer to the server. */

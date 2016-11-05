@@ -2,13 +2,17 @@
 
 void process_message(char* message)
 {
-    gchar** command = g_strsplit(message, " ", 0);
+    gchar** msg = g_strsplit(message, ":", 0);
+    gchar* data = msg[1];
+
+    gchar** command = g_strsplit(msg[0], " ", 0);
 
     if(g_strcmp0("USER", command[0]) == 0)
-        printf("User logged in as %s\n", command[1]);
+        printf("User logged in as %s with password %s\n", command[1], data);
     if(g_strcmp0("LIST", command[0]) == 0)
         printf("User requested list\n");
-
+    if(g_strcmp0("WHO", command[0]) == 0)
+        printf("User requested list of users\n");
 }
 
 gboolean iter_connections(gpointer key, gpointer value, gpointer data) {
@@ -55,7 +59,6 @@ int runServer(int PortNum)
     int sockFd = -1, max_fd = 0;
     struct  sockaddr_in server;
     SSL_CTX* theSSLctx;
-    GTree* connectionList;
     int opt = 1;
 
     /* Print the banner */
