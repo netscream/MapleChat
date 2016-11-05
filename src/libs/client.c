@@ -2,7 +2,7 @@
 
 int runClient(const char* serverIP, const int portNum)
 {
-    debugS("Run client");
+    debug_s("Run client");
     theSSLctx = NULL;
     initialize_exitfd();
     initializeOpenSSLCert();
@@ -13,7 +13,7 @@ int runClient(const char* serverIP, const int portNum)
     }
     connectToServer(serverIP, portNum);
 
-    debugS("SSL connect");
+    debug_s("SSL connect");
     /* Now we can create BIOs and use them instead of the socket.
      * The BIO is responsible for maintaining the state of the
      * encrypted connection and the actual encryption. Reads and
@@ -28,7 +28,7 @@ int runClient(const char* serverIP, const int portNum)
     prompt = strdup("> ");
     rl_callback_handler_install(prompt, (rl_vcpfunc_t*) &readline_callback);
     for (;;) {
-        //debugS("For loop in run server");
+        //debug_s("For loop in run server");
         fd_set rfds;
         struct timeval timeout;
 
@@ -88,7 +88,7 @@ int runClient(const char* serverIP, const int portNum)
 
         /* Handle messages from the server here! */
         if (FD_ISSET(server_fd, &rfds)) {
-            debugS("getting messages from server");
+            debug_s("getting messages from server");
             char message[512];
             memset(&message, 0, sizeof(message));
             SSL_read(server_ssl, message, sizeof(message));
@@ -119,7 +119,7 @@ int runClient(const char* serverIP, const int portNum)
  */
 void connectToServer(const char* server, const int portNum)
 {
-    debugS("Inside connectToServer\n");
+    debug_s("Inside connectToServer\n");
     int sslErr = -1;
     memset(&serverAddr, '\0', sizeof(serverAddr));
 
@@ -139,7 +139,7 @@ void connectToServer(const char* server, const int portNum)
     /* Use the socket for the SSL connection. */
     if (SSL_set_fd(server_ssl, server_fd) <= 0)
     {
-        debugS("SSL set fd error:");
+        debug_s("SSL set fd error:");
         ERR_print_errors_fp(stderr);
         exit(1);
     }
@@ -147,7 +147,7 @@ void connectToServer(const char* server, const int portNum)
     sslErr = SSL_connect(server_ssl);
     if (sslErr <= 0 || sslErr == 2)
     {
-        debugS("SSL connect error:");
+        debug_s("SSL connect error:");
         printSSLError(SSL_get_error(server_ssl, sslErr));
     }
 
@@ -274,11 +274,11 @@ void readline_callback(char *line)
         return;
     }
     if (strncmp("/list", line, 5) == 0) {
-        debugS("Requesting list");
+        debug_s("Requesting list");
 
         if (SSL_write(server_ssl, "LIST", strlen("LIST")) == -1)
         {
-            debugS("SSL_WRITE error:");
+            debug_s("SSL_WRITE error:");
             ERR_print_errors_fp(stderr);
         }
         /* Query all available chat rooms */
@@ -336,7 +336,7 @@ void readline_callback(char *line)
         gchar* request = g_strconcat("USER ", new_user, ":", passwd, NULL);
         if (SSL_write(server_ssl, request, strlen(request)) == -1)
         {
-            debugS("SSL_WRITE error:");
+            debug_s("SSL_WRITE error:");
             ERR_print_errors_fp(stderr);
         }
         g_free(request);
@@ -352,7 +352,7 @@ void readline_callback(char *line)
         /* Query all available users */
         if (SSL_write(server_ssl, "WHO", strlen("WHO")) == -1)
         {
-            debugS("SSL_WRITE error:");
+            debug_s("SSL_WRITE error:");
             ERR_print_errors_fp(stderr);
         }
         return;
@@ -365,7 +365,7 @@ void readline_callback(char *line)
 
 void initializeOpenSSLCert()
 {
-    debugS("Initialize openssl");
+    debug_s("Initialize openssl");
     /* Initialize OpenSSL */
     SSL_library_init();
     OpenSSL_add_all_algorithms();
@@ -373,7 +373,7 @@ void initializeOpenSSLCert()
     theSSLctx = SSL_CTX_new(TLSv1_client_method());
     if (theSSLctx == NULL)
     {
-        debugS("SSL ctx new error: ");
+        debug_s("SSL ctx new error: ");
         ERR_print_errors_fp(stderr);
         exit(1);
     }
@@ -381,7 +381,7 @@ void initializeOpenSSLCert()
     /* Lets load the certificate pointed by macros */
     if (SSL_CTX_use_certificate_file(theSSLctx, OPENSSL_SERVER_CERT, SSL_FILETYPE_PEM) <= 0)
     {
-        debugS("CTX certificate error: ");
+        debug_s("CTX certificate error: ");
         ERR_print_errors_fp(stderr); //openssl/err.h
         exit(1); //exit with errors
     }
@@ -390,7 +390,7 @@ void initializeOpenSSLCert()
     server_ssl = SSL_new(theSSLctx);
     if (server_ssl == NULL)
     {
-        debugS("CTX set verify error: ");
+        debug_s("CTX set verify error: ");
         ERR_print_errors_fp(stderr);
         exit(1);
     }

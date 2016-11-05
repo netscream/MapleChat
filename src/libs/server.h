@@ -36,8 +36,8 @@ struct userInformation {
     char *username;
     char *nickname;
     char *roomname;
-    int countLogins;
-    time_t logintTimeout;
+    int count_logins;
+    time_t login_timeout;
 };
 typedef struct userInformation UserI;
 /* end of structures for the users */
@@ -48,12 +48,12 @@ struct iterArguments {
 };
 typedef struct iterArguments iterArgs;
 
-int runServer(int PortNum);
-struct sockaddr_in serverStructInit(const int PortNum);
-int initalizeServer(const int PortNum, struct sockaddr_in server);
-SSL_CTX* initializeOpenSSLCert();
+int run_server(int port_num);
+struct sockaddr_in server_struct_init(const int port_num);
+int initalize_server(const int port_num, struct sockaddr_in server);
+SSL_CTX* initialize_open_SSL_cert();
 int sockaddr_in_cmp(const void *addr1, const void *addr2);
 gint fd_cmp(gconstpointer fd1,  gconstpointer fd2, gpointer G_GNUC_UNUSED data);
 void logger(struct sockaddr_in *client, int type);
-void initializeUserStruct(struct userInformation *newUser);
+void initialize_user_struct(struct userInformation *new_user);
 #endif
