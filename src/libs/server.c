@@ -192,7 +192,7 @@ void process_message(char* message, struct userInformation* user)
         }
         else
         {
-            room->user_list = g_list_append(room->user_list, user);
+            room->user_list = g_list_append(room->user_list, user->username);
         }
         user->current_room = (struct room_information*) room;
         debug_s(user->current_room->room_name);
