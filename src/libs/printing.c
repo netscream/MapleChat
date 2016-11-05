@@ -87,7 +87,7 @@ void get_header_time(char* buffer, int mode)
  * Function logToConsole
  * For client connection logging
  */
-void log_to_console(struct sockaddr_in client_addr)
+void log_to_console(struct sockaddr_in client_addr, char *connection_state)
 {
     debug_s("Logging to file");
     int len = 20;
@@ -106,7 +106,7 @@ void log_to_console(struct sockaddr_in client_addr)
     strcat(buffer, port_id); //port
     strcat(buffer, " ");
     strcat(buffer, " : ");
-    strcat(buffer, "connected");
+    strcat(buffer, connection_state);
     strcat(buffer, "\n");
     printf("%s", buffer);
     debug_s("Returning from logtofile");
