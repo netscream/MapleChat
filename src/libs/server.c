@@ -55,7 +55,7 @@ int user_authenticate(gchar* username, gchar* passwd)
     }
 }
 
-void process_message(char* message, struct sockaddr_in* user)
+void process_message(char* message, struct userInformation* user)
 {
     gchar** msg = g_strsplit(message, ":", 0);
     gchar* data = msg[1];
@@ -83,6 +83,13 @@ void process_message(char* message, struct sockaddr_in* user)
     {
         printf("User requested list of users\n");
     }
+    else
+    if(g_strcmp0("PRIVMSG", command[0]) == 0)
+    {
+        printf("User sending private message\n");
+
+    }
+    
 }
 
 gboolean iter_connections(gpointer key, gpointer value, gpointer data)
@@ -96,7 +103,7 @@ gboolean iter_connections(gpointer key, gpointer value, gpointer data)
         memset(message, 0, sizeof(message));
         SSL_read(user->sslFd, message, sizeof(message));
         printf("Message: %s\n", message);
-        process_message(message , (struct sockaddr_in*) user);
+        process_message(message , (struct userInformation*) user);
     }
     else
     {
@@ -131,6 +138,17 @@ gboolean iter_rooms(gpointer key, gpointer value, gpointer data)
     return 0;
 }
 
+gboolean iter_users_privmsg(gpointer key, gpointer value, gpointer data)
+{
+    UserI* temp = (UserI*) value;
+    char* temp_string = (char*) data;
+    if (g_strcmp0(temp_string[0], temp->username) == 0)
+    {
+        char* send_string = (char*) temp_string[1];
+        return 1;
+    }
+    return 0;
+}
 /*
  * Function runServer
  * The main server function
@@ -461,4 +479,9 @@ void initialize_user_struct(struct userInformation *new_user)
     new_user->roomname = NULL;
     new_user->count_logins = 0;
     new_user->login_timeout = 0;
+}
+
+int send_to_user_message(struct userInformation user, char* message)
+{
+
 }
