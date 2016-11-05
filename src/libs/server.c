@@ -93,7 +93,8 @@ void process_message(char* message, struct userInformation* user)
 
     }
     else if(g_strcmp0("JOIN", command[0]) == 0){
-        debug_s("user wants to join \n");
+        debug_s("user wants to join ");
+        debug_s(command[1]);
         if(user->current_room != NULL)
         {
             struct room_information* tmp_room = user->current_room;
@@ -101,7 +102,7 @@ void process_message(char* message, struct userInformation* user)
             if (g_list_length(tmp_room->user_list) == 0)
             {
                 g_list_free(tmp_room->user_list);
-                g_tree_remove(roomsOnServerList, (gpointer) tmp_room->key);
+                g_tree_remove(roomsOnServerList, tmp_room->room_name);
                 g_free(tmp_room);
             }
             user->current_room = NULL;
@@ -110,20 +111,24 @@ void process_message(char* message, struct userInformation* user)
         printf("joining this room  %s\n",command[1]);
         RoomI *room = NULL;
         debug_s(command[1]);
-        room = g_tree_lookup(roomsOnServerList,(gconstpointer) command[1]);
+        room = g_tree_lookup(roomsOnServerList,command[1]);
         debug_s("Done looking \n");
         if(room  == NULL)
         {
             room = g_new0(RoomI,1);
             room->room_name = command[1];
-            room->key = (gpointer) room->room_name;
             room->user_list = g_list_append(room->user_list,user);
             debug_s("new room created  \n");
-            g_tree_insert(roomsOnServerList,room->key,room);
+            g_tree_insert(roomsOnServerList,room->room_name,room);
+            debug_s("done creating/found room \n");
         }    
-        debug_s("done creating/found room \n");
+        else
+        {
+            room->user_list = g_list_append(room->user_list,user);
+        }
         user->current_room = (struct room_information*) room;
         debug_s(user->current_room->room_name);
+        debug_s(room->room_name);
         printf("joined this room, %s\n",command[1]);
     
     }
@@ -264,8 +269,8 @@ int run_server(int port_num)
         g_debug("%s", error->message);
 
     connectionList = g_tree_new((GCompareFunc) fd_cmp);
-    roomsOnServerList = g_tree_new((GCompareFunc) room_name_cmp);
-    usersOnServerList = g_tree_new((GCompareFunc)g_ascii_strcasecmp);
+    roomsOnServerList = g_tree_new((GCompareFunc) g_ascii_strcasecmp);
+    usersOnServerList = g_tree_new((GCompareFunc) g_ascii_strcasecmp);
     while(1)
     {
         fd_set readFdSet;
@@ -495,10 +500,10 @@ gint fd_cmp(gconstpointer user1,  gconstpointer user2, gpointer G_GNUC_UNUSED da
     return GPOINTER_TO_INT(((UserI*) user1)->fd) - GPOINTER_TO_INT(((UserI*) user2)->fd);
 }
 
-gint room_name_cmp(gconstpointer A,  gconstpointer B, gpointer G_GNUC_UNUSED data)
+/*gint room_name_cmp(gconstpointer A,  gconstpointer B, gpointer G_GNUC_UNUSED data)
 {
     return g_strcmp0(((struct room_information*) A)->room_name, ((struct room_information*)B)->room_name);
-}
+}*/
 
 void logger(struct sockaddr_in *client, int type)
 {
