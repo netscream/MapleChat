@@ -264,6 +264,12 @@ void readline_callback(char *line)
             return;
         }
         char *chatroom = strdup(&(line[i]));
+        gchar* request = g_strconcat("JOIN ", chatroom, NULL);
+        if (SSL_write(server_ssl, request, strlen(request)) == -1)
+        {
+            debug_s("SSL_WRITE error:");
+            ERR_print_errors_fp(stderr);
+        }
 
         /* Process and send this information to the server. */
 
