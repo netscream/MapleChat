@@ -39,7 +39,7 @@ int runClient(const char* serverIP, const int portNum)
         FD_SET(STDIN_FILENO, &rfds);
         FD_SET(exitfd[0], &rfds);
         FD_SET(server_fd, &rfds);
-        timeout.tv_sec = 5;
+        timeout.tv_sec = 2;
         timeout.tv_usec = 0;
         //debugD("serverfd = ", server_fd);
         //debugD("exitfd = ", exitfd[0]);
@@ -95,7 +95,21 @@ int runClient(const char* serverIP, const int portNum)
             printf("%s", message);
         }
     }
-
+    int sslErr = -1;
+    sslErr = SSL_shutdown(server_ssl);
+    if (sslErr == -1)
+    {
+        ERR_print_errors_fp(stderr);
+    }
+    sslErr = close(server_fd);
+    if (sslErr == -1)
+    {
+        perror("Closing filedescriptor error: ");
+        exit(1);
+    }
+    SSL_free(server_ssl);
+    SSL_CTX_free(theSSLctx);
+    return 0;
     /* replace by code to shutdown the connection and exit
        the program. */
 }
@@ -358,14 +372,6 @@ void initializeOpenSSLCert()
         ERR_print_errors_fp(stderr);
         exit(1);
     }
-    /* TODO:
-     * We may want to use a certificate file if we self sign the
-     * certificates using SSL_use_certificate_file(). If available,
-     * a private key can be loaded using
-     * SSL_CTX_use_PrivateKey_file(). The use of private keys with
-     * a server side key data base can be used to authenticate the
-     * client.
-     */
 
     /* Lets load the certificate pointed by macros */
     if (SSL_CTX_use_certificate_file(theSSLctx, OPENSSL_SERVER_CERT, SSL_FILETYPE_PEM) <= 0)
