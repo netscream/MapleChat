@@ -44,6 +44,8 @@ struct userInformation
     time_t login_timeout;
     struct room_information* current_room;
 };
+typedef struct userInformation UserI;
+/* end of structures for the users */
 
 struct room_information 
 {
@@ -51,8 +53,9 @@ struct room_information
 	GList *user_list;
 };
 
-typedef struct userInformation UserI;
-/* end of structures for the users */
+typedef struct room_information RoomI;
+/* end of structures for the rooms */
+
 
 struct iterArguments {
     fd_set* readFdSet;

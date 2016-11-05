@@ -73,13 +73,26 @@ void process_message(char* message, struct userInformation* user)
         debug_s("User requested list of chat rooms\n");
         g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms, (gpointer) user);
     }
-    else
-    if(g_strcmp0("WHO", command[0]) == 0)
+    else if(g_strcmp0("JOIN", command[0]) == 0){
+        if(user->current_room->room_name !="")
+        {
+            user->current_room->room_name ="";
+        }
+        if(g_tree_lookup(roomsOnServerList,data) != NULL)
+        {
+           // user->current_room = 
+        }    
+        RoomI *new_room = g_new0(RoomI,1);
+        new_room->room_name = data;
+        new_room->user_list = g_list_append(new_room->user_list,user);
+        g_tree_insert(roomsOnServerList,new_room->room_name,new_room->user_list);
+    
+    }
+    else if(g_strcmp0("WHO", command[0]) == 0)
     {
         printf("User requested list of users\n");
     }
-    else
-    if(g_strcmp0("PRIVMSG", command[0]) == 0)
+    else if(g_strcmp0("PRIVMSG", command[0]) == 0)
     {
         printf("User sending private message\n");
 
