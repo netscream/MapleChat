@@ -5,10 +5,10 @@
 #include <arpa/inet.h> //for inet_ntop
 #include "debugging.h"
 
-void printToOutput(char* message, int length);
-void printToOutputSendHeader(char* header, int oneIfFromClient, struct sockaddr_in clientAddr);
-void printToOutputError(char* message, struct sockaddr_in clientAddr);
-void printBanner();
-void getHeaderTime(char* buffer, int mode);
-
+void print_to_output(char* message, int length);
+void print_to_output_send_header(char* header, int oneIfFromClient, struct sockaddr_in clientAddr);
+void print_to_output_error(char* message, struct sockaddr_in clientAddr);
+void print_banner();
+void get_header_time(char* buffer, int mode);
+void log_to_console(struct sockaddr_in client);
 #endif
