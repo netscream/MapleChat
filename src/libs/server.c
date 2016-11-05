@@ -73,7 +73,6 @@ void process_message(char* message, struct userInformation* user)
             gchar* usern = g_strdup(command[1]);
             user->username = usern;
             user->count_logins++;
-
             g_tree_insert(usersOnServerList, user->username, user);
         }
         else
@@ -89,28 +88,32 @@ void process_message(char* message, struct userInformation* user)
         if (g_strcmp0("", list_of_chans) != 0)
         {
             debug_s(list_of_chans);
-            gchar* tmp = g_strconcat("Users on server: ", list_of_chans, "\n", NULL);
+            gchar* tmp = g_strconcat("Channels on server: ", list_of_chans, "\n", NULL);
             g_free(list_of_chans);
-            SSL_write(user->sslFd, list_of_chans, strlen(list_of_chans));
+            SSL_write(user->sslFd, tmp, strlen(tmp));
         }
 
     }
     else if(g_strcmp0("JOIN", command[0]) == 0){
         debug_s("user wants to join ");
-        debug_s(command[1]);
         if(user->current_room != NULL)
         {
             struct room_information* tmp_room = user->current_room;
-            tmp_room->user_list = g_list_remove(tmp_room->user_list,user->username);
+            printf("g_list length = %d\n", g_list_length(tmp_room->user_list));
+            tmp_room->user_list = g_list_remove(tmp_room->user_list, user->username);
+            printf("g_list length = %d\n", g_list_length(tmp_room->user_list));
             if (g_list_length(tmp_room->user_list) == 0)
             {
                 g_list_free(tmp_room->user_list);
+                gchar* tmp = g_strdup(tmp_room->room_name);
                 g_tree_remove(roomsOnServerList, tmp_room->room_name);
+                g_free(tmp_room->room_name);
                 g_free(tmp_room);
             }
             user->current_room = NULL;
             debug_s("Old room removed \n");
         }
+        
         printf("joining this room  %s\n",command[1]);
         RoomI *room = NULL;
         debug_s(command[1]);
@@ -119,7 +122,7 @@ void process_message(char* message, struct userInformation* user)
         if(room  == NULL)
         {
             room = g_new0(RoomI,1);
-            room->room_name = command[1];
+            room->room_name = g_strdup(command[1]);
             room->user_list = g_list_append(room->user_list,user);
             debug_s("new room created  \n");
             g_tree_insert(roomsOnServerList, (gchar*) room->room_name, room);
@@ -127,7 +130,7 @@ void process_message(char* message, struct userInformation* user)
         }    
         else
         {
-            room->user_list = g_list_append(room->user_list,user);
+            room->user_list = g_list_append(room->user_list, user);
         }
         user->current_room = (struct room_information*) room;
         debug_s(user->current_room->room_name);
