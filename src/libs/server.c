@@ -2,17 +2,19 @@
 
 gchar* generate_salt()
 {
-    gchar* salt = g_strdup("AAAAAAAAAA");
-    for( int i = 0; i < 10; ++i)
+    debug_s("Generating new salt");
+    gchar* salt = g_new0(gchar, 10);
+    for( int i = 0; i < 9; ++i)
     {
         salt[i] = '0' + rand()%72; // starting on '0', ending on '}'
     }
+    salt[9] = '\0';
     return salt;
 }
 
 gchar* user_get_salt(gchar* username)
 {
-    debug_s("Getting password saalt");
+    debug_s("Getting password salt");
     GError* error = NULL;
     gchar *salt = g_key_file_get_string(keyfile, "salts",
             username, &error);
@@ -42,24 +44,36 @@ gchar* user_get_hash(gchar* username)
     return passwd;
 }
 
-void user_set_hash(gchar* username, gchar* passwd)
+gchar* user_hash_password(gchar* passwd, gchar* salt)
 {
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    gchar* salt = generate_salt();
+    debug_s("Hashing user password");
 
-    gchar* password = g_strconcat(passwd, salt);
+    gchar* hash = g_new0(gchar, SHA256_DIGEST_LENGTH);
+
+    gchar* password = g_strconcat(passwd, salt, NULL);
 
     SHA256_CTX sha256;
     SHA256_Init(&sha256);
-    SHA256_Update(&sha256, passwd, strlen(passwd));
+    SHA256_Update(&sha256, password, strlen(password));
     SHA256_Final(hash, &sha256);
+
+    g_free(password);
+    return hash;
+}
+
+void user_set_hash(gchar* username, gchar* passwd)
+{
+    gchar* salt = generate_salt();
+
+    gchar* hash = user_hash_password(passwd, salt);
 
     debug_s("Setting password hash");
     gchar *hash64 = g_base64_encode(hash, strlen(hash));
     g_key_file_set_string(keyfile, "passwords", username, hash64);
     g_key_file_set_string(keyfile, "salts", username, salt);
     g_key_file_save_to_file(keyfile, "passwords.ini", NULL);
-    g_free(password);
+
+    g_free(hash);
     g_free(salt);
     g_free(hash64);
 }
@@ -67,8 +81,8 @@ void user_set_hash(gchar* username, gchar* passwd)
 int user_authenticate(gchar* username, gchar* passwd)
 {
     debug_s("Authenticating user");
-    gchar* hash = user_get_hash(username);
-    if(hash == NULL)
+    gchar* stored_hash = user_get_hash(username);
+    if(stored_hash == NULL)
     {
         debug_s("Creating new user");
         /* New user, hash his password and store it */
@@ -77,33 +91,30 @@ int user_authenticate(gchar* username, gchar* passwd)
     }
     else
     {
+        int authenticated = 0;
         debug_s("Checking password");
         /* Check if the given password matches the hash */
 
-        unsigned char hash[SHA256_DIGEST_LENGTH];
         gchar* salt = user_get_salt(username);
-        gchar* stored_hash = user_get_hash(username);
-
-        gchar* password = g_strconcat(passwd, salt);
-
-        SHA256_CTX sha256;
-        SHA256_Init(&sha256);
-        SHA256_Update(&sha256, passwd, strlen(passwd));
-        SHA256_Final(hash, &sha256);
-
+        gchar* hash = user_hash_password(passwd, salt);
 
         if(g_strcmp0(hash, stored_hash) == 0)
         {
             debug_s("Password is correct");
             /* Authenticated */
-            return 1;
+            authenticated = 1;
         }
         else
         {
             debug_s("Password is incorrect");
             /* Failed, can only happen 3 times until disconnect */
-            return 0;
+            authenticated = 0;
         }
+
+        g_free(salt);
+        g_free(stored_hash);
+        g_free(hash);
+        return authenticated;
     }
 
     return 0;
@@ -120,7 +131,7 @@ void process_message(char* message, struct userInformation* user)
     {
         if(user_authenticate(command[1], data))
         {
-            printf("User logged in as %s\n", command[1], data);
+            printf("User logged in as %s\n", command[1]);
             gchar* usern = g_strdup(command[1]);
             user->username = usern;
             user->count_logins++;
@@ -129,14 +140,14 @@ void process_message(char* message, struct userInformation* user)
         }
         else
         {
-            printf("Incorrect password for %s\n", command[1], data);
+            printf("Incorrect password for %s\n", command[1]);
         }
     }
     else if(g_strcmp0("LIST", command[0]) == 0)
     {
         debug_s("User requested list of chat rooms\n");
         gchar* list_of_chans = g_strdup("");
-        g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms_or_users, (gpointer) &list_of_chans);        
+        g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms_or_users, (gpointer) &list_of_chans);
         if (g_strcmp0("", list_of_chans) != 0)
         {
             debug_s(list_of_chans);
@@ -175,7 +186,7 @@ void process_message(char* message, struct userInformation* user)
             debug_s("new room created  \n");
             g_tree_insert(roomsOnServerList, (gchar*) room->room_name, room);
             debug_s("done creating/found room \n");
-        }    
+        }
         else
         {
             room->user_list = g_list_append(room->user_list,user);
@@ -184,7 +195,7 @@ void process_message(char* message, struct userInformation* user)
         debug_s(user->current_room->room_name);
         debug_s(room->room_name);
         printf("joined this room, %s\n",command[1]);
-    
+
     }
     else if(g_strcmp0("WHO", command[0]) == 0)
     {
@@ -553,6 +564,7 @@ int sockaddr_in_cmp(const void *addr1, const void *addr2)
     } else if (_addr1->sin_port > _addr2->sin_port) {
         return 1;
     }
+    return 0;
 }
 
 /* This can be used to build instances of GTree that index on

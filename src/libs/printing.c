@@ -52,7 +52,7 @@ void print_to_output_error(char* message, struct sockaddr_in client_addr)
 void print_banner()
 {
     printf("------------------------------------------------\n");
-    printf("|      Mable chat server for tsam course       |\n");
+    printf("|      Maple Chat server for tsam course       |\n");
     printf("|   Authors:                                   |\n");
     printf("|   Arnar Páll Jóhannsson   <arnarpj15@ru.is>  |\n");
     printf("|   Hlynur Óskar Guðmundsson<hlynur15@ru.is>   |\n");
