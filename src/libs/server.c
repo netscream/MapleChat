@@ -72,7 +72,7 @@ void process_message(char* message, struct userInformation* user)
     {
         debug_s("User requested list of chat rooms\n");
         gchar* list_of_chans = NULL;
-        g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms, (gpointer) list_of_chans);
+        g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms_or_users, (gpointer) list_of_chans);
         if (list_of_chans != NULL)
         {
             SSL_write(user->sslFd, list_of_chans, strlen(list_of_chans));
@@ -130,7 +130,7 @@ gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data)
 }
 
 
-gboolean iter_rooms(gpointer key, gpointer value, gpointer data)
+gboolean iter_rooms_or_users(gpointer key, gpointer value, gpointer data)
 {
     /*SSL* user_ssl = ((UserI*) data)->sslFd;
     struct room_information* temp = (struct room_information*) value;
