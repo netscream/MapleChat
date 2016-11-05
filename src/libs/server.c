@@ -10,7 +10,10 @@ void process_message(char* message)
     if(g_strcmp0("USER", command[0]) == 0)
         printf("User logged in as %s with password %s\n", command[1], data);
     if(g_strcmp0("LIST", command[0]) == 0)
-        printf("User requested list\n");
+    {
+        debug_s("User requested list\n");
+        //g_tree_foreach(roomsOnServerList, (GCompareFunc) iter_rooms, );
+    }
     if(g_strcmp0("WHO", command[0]) == 0)
         printf("User requested list of users\n");
 }
@@ -46,6 +49,16 @@ gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data) {
     if(user->fd > *(args->max_fd))
         *(args->max_fd) = user->fd;
 
+    return 0;
+}
+
+
+gboolean iter_rooms(gpointer key, gpointer value, gpointer data)
+{
+    SSL* user_ssl = ((UserI*) data)->sslFd;
+    struct room_information* temp = (struct room_information*) value;
+    debug_s(temp->room_name);
+    SSL_write(user_ssl, temp->room_name, strlen(temp->room_name));
     return 0;
 }
 

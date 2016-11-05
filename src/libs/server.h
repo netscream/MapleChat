@@ -65,4 +65,5 @@ gint fd_cmp(gconstpointer fd1,  gconstpointer fd2, gpointer G_GNUC_UNUSED data);
 gint room_name_cmp(gconstpointer A,  gconstpointer B, gpointer G_GNUC_UNUSED data);
 void logger(struct sockaddr_in *client, int type);
 void initialize_user_struct(struct userInformation *new_user);
+gboolean iter_rooms(gpointer key, gpointer value, gpointer data);
 #endif
