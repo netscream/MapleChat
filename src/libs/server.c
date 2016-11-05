@@ -2,12 +2,18 @@
 
 gchar* user_get_hash(gchar* username)
 {
+    debug_s("Getting password hash");
+    GError* error = NULL;
     gchar *passwd64 = g_key_file_get_string(keyfile, "passwords",
-            username, NULL);
+            username, &error);
+
+    g_debug("%s", error->message);
     gsize length;
 
     if( passwd64 == NULL )
+    {
         return NULL;
+    }
 
     gchar *passwd = g_base64_decode(passwd64, &length);
     return passwd;
@@ -15,32 +21,35 @@ gchar* user_get_hash(gchar* username)
 
 void user_set_hash(gchar* username, gchar* hash)
 {
+    debug_s("Setting password hash");
     gchar *hash64 = g_base64_encode(hash, strlen(hash));
     g_key_file_set_string(keyfile, "passwords", username, hash64);
+    g_key_file_save_to_file(keyfile, "passwords.ini", NULL);
     g_free(hash64);
-    /* gsize length; */
-    /* gchar *keyfile_string = g_key_file_to_data(keyfile, &length); */
-    /* write(fd, keyfile_string, length); */
-    /* g_free(keyfile_string); */
 }
 
 int user_authenticate(gchar* username, gchar* passwd)
 {
+    debug_s("Authenticating user");
     gchar* hash = user_get_hash(username);
     if(hash == NULL)
     {
+        debug_s("Creating new user");
         /* New user, hash his password and store it */
         user_set_hash(username, passwd);
     }
     else
     {
+        debug_s("Checking password");
         /* Check if the given password matches the hash */
         if(g_strcmp0(hash, passwd) == 0)
         {
+            debug_s("Password is correct");
             /* Authenticated */
         }
         else
         {
+            debug_s("Password is incorrect");
             /* Failed, can only happen 3 times until disconnect */
         }
     }
@@ -137,10 +146,13 @@ int run_server(int port_num)
     /* Initialize connectionList */
     connectionList = g_tree_new((GCompareFunc)fd_cmp);
 
+    GError* error = NULL;
+
     /* Load password file */
-    GKeyFile *keyfile = g_keyfile_new();
-    g_key_file_load_from_file(keyfile, "passwords.ini",
-            G_KEY_FILE_NONE, NULL);
+    keyfile = g_key_file_new();
+    if(!g_key_file_load_from_file(keyfile, "passwords.ini",
+            G_KEY_FILE_NONE, &error))
+        g_debug("%s", error->message);
 
     while(1)
     {

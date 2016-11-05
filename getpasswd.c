@@ -23,36 +23,36 @@
  */
 void getpasswd(const char *prompt, char *passwd, size_t size)
 {
-	struct termios old_flags, new_flags;
+    struct termios old_flags, new_flags;
 
-        /* Clear out the buffer content. */
-        memset(passwd, 0, size);
-        
-        /* Disable echo. */
-	tcgetattr(fileno(stdin), &old_flags);
-	memcpy(&new_flags, &old_flags, sizeof(old_flags));
-	new_flags.c_lflag &= ~ECHO;
-	new_flags.c_lflag |= ECHONL;
-	if (tcsetattr(fileno(stdin), TCSANOW, &new_flags) != 0) {
-		perror("tcsetattr");
-		exit(EXIT_FAILURE);
-	}
+    /* Clear out the buffer content. */
+    memset(passwd, 0, size);
 
-        /* Write the prompt. */
-	write(STDOUT_FILENO, prompt, strlen(prompt));
-        fsync(STDOUT_FILENO);
-	fgets(passwd, size, stdin);
+    /* Disable echo. */
+    tcgetattr(fileno(stdin), &old_flags);
+    memcpy(&new_flags, &old_flags, sizeof(old_flags));
+    new_flags.c_lflag &= ~ECHO;
+    new_flags.c_lflag |= ECHONL;
+    if (tcsetattr(fileno(stdin), TCSANOW, &new_flags) != 0) {
+        perror("tcsetattr");
+        exit(EXIT_FAILURE);
+    }
 
-	/* The result in passwd is '\0' terminated and may contain a final
-	 * '\n'. If it exists, we remove it.
-	 */
-	if (passwd[strlen(passwd) - 1] == '\n') {
-		passwd[strlen(passwd) - 1] = '\0';
-	}
+    /* Write the prompt. */
+    write(STDOUT_FILENO, prompt, strlen(prompt));
+    fsync(STDOUT_FILENO);
+    fgets(passwd, size, stdin);
 
-	/* Restore the terminal */
-	if (tcsetattr(fileno(stdin), TCSANOW, &old_flags) != 0) {
-		perror("tcsetattr");
-		exit(EXIT_FAILURE);
-	}
+    /* The result in passwd is '\0' terminated and may contain a final
+     * '\n'. If it exists, we remove it.
+     */
+    if (passwd[strlen(passwd) - 1] == '\n') {
+        passwd[strlen(passwd) - 1] = '\0';
+    }
+
+    /* Restore the terminal */
+    if (tcsetattr(fileno(stdin), TCSANOW, &old_flags) != 0) {
+        perror("tcsetattr");
+        exit(EXIT_FAILURE);
+    }
 }
