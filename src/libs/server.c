@@ -84,9 +84,6 @@ void process_message(char* message, struct userInformation* user)
     else if(g_strcmp0("LIST", command[0]) == 0)
     {
         debug_s("User requested list of chat rooms\n");
-<<<<<<< HEAD
-        g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms, user);
-=======
         gchar* list_of_chans = NULL;
         g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms_or_users, (gpointer) list_of_chans);
         if (list_of_chans != NULL)
@@ -94,20 +91,23 @@ void process_message(char* message, struct userInformation* user)
             SSL_write(user->sslFd, list_of_chans, strlen(list_of_chans));
         }
 
->>>>>>> dcd2d143b2a37339ad91a35883693535a9c42b0e
     }
     else if(g_strcmp0("WHO", command[0]) == 0)
     {
         printf("User requested list of users\n");
-        g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_users, user);
+        gchar* list_of_users = g_strdup("helo");
+        debug_s(list_of_users);
+        g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_rooms_or_users, (gpointer) list_of_users);
+        if (list_of_users != NULL)
+        {
+            debug_s(list_of_users);
+            SSL_write(user->sslFd, list_of_users, strlen(list_of_users));
+        }
     }
     else if(g_strcmp0("PRIVMSG", command[0]) == 0)
     {
         printf("User sending private message\n");
-<<<<<<< HEAD
-=======
         g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_users_privmsg, (gpointer) data);
->>>>>>> dcd2d143b2a37339ad91a35883693535a9c42b0e
     }
 
     g_strfreev(msg);
@@ -147,15 +147,6 @@ gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data)
     if(user->fd > *(args->max_fd))
         *(args->max_fd) = user->fd;
 
-    return 0;
-}
-
-gboolean iter_users(gpointer key, gpointer value, gpointer data)
-{
-    SSL* user_ssl = ((UserI*) data)->sslFd;
-    UserI* user = (UserI*) value;
-    debug_s(user->username);
-    SSL_write(user_ssl, user->username, strlen(user->username));
     return 0;
 }
 
@@ -527,10 +518,5 @@ void initialize_user_struct(struct userInformation *new_user)
 
 int send_to_user_message(struct userInformation user, char* message)
 {
-<<<<<<< HEAD
-
-}
-=======
     return 0;
 }
->>>>>>> dcd2d143b2a37339ad91a35883693535a9c42b0e
