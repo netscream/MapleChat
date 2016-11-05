@@ -56,7 +56,7 @@ int user_authenticate(gchar* username, gchar* passwd)
 
 }
 
-void process_message(char* message)
+void process_message(char* message, struct sockaddr_in* user)
 {
     gchar** msg = g_strsplit(message, ":", 0);
     gchar* data = msg[1];
@@ -64,11 +64,20 @@ void process_message(char* message)
     gchar** command = g_strsplit(msg[0], " ", 0);
 
     if(g_strcmp0("USER", command[0]) == 0)
+    {
         user_authenticate(command[1], data);
-    if(g_strcmp0("LIST", command[0]) == 0)
-        printf("User requested list\n");
+        printf("User logged in as %s with password %s\n", command[1], data);
+    }
+    else if(g_strcmp0("LIST", command[0]) == 0)
+    {
+        debug_s("User requested list of chat rooms\n");
+        g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms, (gpointer) user);
+    }
+    else
     if(g_strcmp0("WHO", command[0]) == 0)
+    {
         printf("User requested list of users\n");
+    }
 }
 
 gboolean iter_connections(gpointer key, gpointer value, gpointer data)
@@ -82,7 +91,7 @@ gboolean iter_connections(gpointer key, gpointer value, gpointer data)
         memset(message, 0, sizeof(message));
         SSL_read(user->sslFd, message, sizeof(message));
         printf("Message: %s\n", message);
-        process_message(message);
+        process_message(message , (struct sockaddr_in*) user);
     }
     else
     {
@@ -104,6 +113,16 @@ gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data)
     if(user->fd > *(args->max_fd))
         *(args->max_fd) = user->fd;
 
+    return 0;
+}
+
+
+gboolean iter_rooms(gpointer key, gpointer value, gpointer data)
+{
+    SSL* user_ssl = ((UserI*) data)->sslFd;
+    struct room_information* temp = (struct room_information*) value;
+    debug_s(temp->room_name);
+    SSL_write(user_ssl, temp->room_name, strlen(temp->room_name));
     return 0;
 }
 
@@ -137,15 +156,12 @@ int run_server(int port_num)
     /* Run the server FOREVER */
 
     /* Allow multiple binds on main socket, this prevents blocking when debugging */
-    if(setsockopt(sockFd, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0)
-    {
-        error("setsockopt");
+    if(setsockopt(sockFd, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0) {
+        perror("setsockopt");
         return 1;
     }
 
     /* Initialize connectionList */
-    connectionList = g_tree_new((GCompareFunc)fd_cmp);
-
     GError* error = NULL;
 
     /* Load password file */
@@ -154,6 +170,8 @@ int run_server(int port_num)
             G_KEY_FILE_NONE, &error))
         g_debug("%s", error->message);
 
+    connectionList = g_tree_new((GCompareFunc) fd_cmp);
+    roomsOnServerList = g_tree_new((GCompareFunc) room_name_cmp);
     while(1)
     {
         fd_set readFdSet;
@@ -246,7 +264,7 @@ int run_server(int port_num)
         g_tree_foreach(connectionList, (GTraverseFunc)iter_connections, &readFdSet);
     }
     /* exit server */
-    printToOutput("Server exiting\n", 15);
+    print_to_output("Server exiting\n", 15);
     g_tree_destroy(connectionList);
     g_tree_destroy(roomsOnServerList);
     g_tree_destroy(usersOnServerList);
@@ -379,9 +397,14 @@ int sockaddr_in_cmp(const void *addr1, const void *addr2)
 
 /* This can be used to build instances of GTree that index on
    the file descriptor of a connection. */
-gint fd_cmp(gconstpointer fd1,  gconstpointer fd2, gpointer G_GNUC_UNUSED data)
+gint fd_cmp(gconstpointer user1,  gconstpointer user2, gpointer G_GNUC_UNUSED data)
 {
-    return GPOINTER_TO_INT(fd1) - GPOINTER_TO_INT(fd2);
+    return GPOINTER_TO_INT(((UserI*) user1)->fd) - GPOINTER_TO_INT(((UserI*) user2)->fd);
+}
+
+gint room_name_cmp(gconstpointer A,  gconstpointer B, gpointer G_GNUC_UNUSED data)
+{
+    return g_strcmp0(((struct room_information*) A)->room_name, ((struct room_information*)B)->room_name);
 }
 
 void logger(struct sockaddr_in *client, int type)

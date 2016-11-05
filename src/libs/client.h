@@ -23,6 +23,8 @@
 /* For nicer interaction, we use the GNU readline library. */
 #include <readline/readline.h>
 #include <readline/history.h>
+#include "debugging.h"
+#include "printing.h"
 
 #define OPENSSL_SERVER_CERT "cert/fd.crt"
 /* This variable holds a file descriptor of a pipe on which we send a
@@ -55,10 +57,9 @@ static char *chatroom;
 static char *prompt;
 
 int run_client(const char* server_ip, const int port_num);
-void connectToServer(const char* server, const int port_num);
+void connect_to_server(const char* server, const int port_num);
 void signal_handler(int signum);
 static void initialize_exitfd(void);
 void readline_callback(char *line);
 void initialize_openSSL_cert();
-void printSSLError(int err);
 #endif
