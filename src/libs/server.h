@@ -15,6 +15,7 @@
 /* Secure socket layer headers */
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/sha.h>
 
 #include "debugging.h"
 #include "printing.h"

@@ -1,5 +1,30 @@
 #include "server.h"
 
+gchar* generate_salt()
+{
+    gchar* salt = g_strdup("AAAAAAAAAA");
+    for( int i = 0; i < 10; ++i)
+    {
+        salt[i] = '0' + rand()%72; // starting on '0', ending on '}'
+    }
+    return salt;
+}
+
+gchar* user_get_salt(gchar* username)
+{
+    debug_s("Getting password saalt");
+    GError* error = NULL;
+    gchar *salt = g_key_file_get_string(keyfile, "salts",
+            username, &error);
+
+    if( salt == NULL )
+    {
+        return NULL;
+    }
+
+    return salt;
+}
+
 gchar* user_get_hash(gchar* username)
 {
     debug_s("Getting password hash");
@@ -17,12 +42,25 @@ gchar* user_get_hash(gchar* username)
     return passwd;
 }
 
-void user_set_hash(gchar* username, gchar* hash)
+void user_set_hash(gchar* username, gchar* passwd)
 {
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    gchar* salt = generate_salt();
+
+    gchar* password = g_strconcat(passwd, salt);
+
+    SHA256_CTX sha256;
+    SHA256_Init(&sha256);
+    SHA256_Update(&sha256, passwd, strlen(passwd));
+    SHA256_Final(hash, &sha256);
+
     debug_s("Setting password hash");
     gchar *hash64 = g_base64_encode(hash, strlen(hash));
     g_key_file_set_string(keyfile, "passwords", username, hash64);
+    g_key_file_set_string(keyfile, "salts", username, salt);
     g_key_file_save_to_file(keyfile, "passwords.ini", NULL);
+    g_free(password);
+    g_free(salt);
     g_free(hash64);
 }
 
@@ -41,7 +79,20 @@ int user_authenticate(gchar* username, gchar* passwd)
     {
         debug_s("Checking password");
         /* Check if the given password matches the hash */
-        if(g_strcmp0(hash, passwd) == 0)
+
+        unsigned char hash[SHA256_DIGEST_LENGTH];
+        gchar* salt = user_get_salt(username);
+        gchar* stored_hash = user_get_hash(username);
+
+        gchar* password = g_strconcat(passwd, salt);
+
+        SHA256_CTX sha256;
+        SHA256_Init(&sha256);
+        SHA256_Update(&sha256, passwd, strlen(passwd));
+        SHA256_Final(hash, &sha256);
+
+
+        if(g_strcmp0(hash, stored_hash) == 0)
         {
             debug_s("Password is correct");
             /* Authenticated */
@@ -211,6 +262,8 @@ int run_server(int port_num)
         perror("setsockopt");
         return 1;
     }
+
+    srand(time(NULL));
 
     /* Initialize connectionList */
     GError* error = NULL;
