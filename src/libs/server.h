@@ -33,7 +33,7 @@ GTree *usersOnServerList;
 GKeyFile *keyfile;
 
 /* Structures to be used for users */
-struct userInformation 
+struct userInformation
 {
     SSL *sslFd;
     int fd;
@@ -45,10 +45,10 @@ struct userInformation
     struct room_information* current_room;
 };
 
-struct room_information 
+struct room_information
 {
-	char* room_name;
-	GList *user_list;
+    char* room_name;
+    GList *user_list;
 };
 
 typedef struct userInformation UserI;
@@ -70,6 +70,7 @@ gint room_name_cmp(gconstpointer A,  gconstpointer B, gpointer G_GNUC_UNUSED dat
 void logger(struct sockaddr_in *client, int type);
 void initialize_user_struct(struct userInformation *new_user);
 gboolean iter_rooms(gpointer key, gpointer value, gpointer data);
+gboolean iter_users(gpointer key, gpointer value, gpointer data);
 void process_message(char* message, struct userInformation* user);
 int send_to_user_message(struct userInformation user, char* message);
 #endif

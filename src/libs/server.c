@@ -35,6 +35,7 @@ int user_authenticate(gchar* username, gchar* passwd)
         debug_s("Creating new user");
         /* New user, hash his password and store it */
         user_set_hash(username, passwd);
+        return 1;
     }
     else
     {
@@ -53,6 +54,8 @@ int user_authenticate(gchar* username, gchar* passwd)
             return 0;
         }
     }
+
+    return 0;
 }
 
 void process_message(char* message, struct userInformation* user)
@@ -67,6 +70,11 @@ void process_message(char* message, struct userInformation* user)
         if(user_authenticate(command[1], data))
         {
             printf("User logged in as %s\n", command[1], data);
+            gchar* usern = g_strdup(command[1]);
+            user->username = usern;
+            user->count_logins++;
+
+            g_tree_insert(usersOnServerList, user->username, user);
         }
         else
         {
@@ -76,20 +84,20 @@ void process_message(char* message, struct userInformation* user)
     else if(g_strcmp0("LIST", command[0]) == 0)
     {
         debug_s("User requested list of chat rooms\n");
-        g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms, (gpointer) user);
+        g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms, user);
     }
-    else
-    if(g_strcmp0("WHO", command[0]) == 0)
+    else if(g_strcmp0("WHO", command[0]) == 0)
     {
         printf("User requested list of users\n");
+        g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_users, user);
     }
-    else
-    if(g_strcmp0("PRIVMSG", command[0]) == 0)
+    else if(g_strcmp0("PRIVMSG", command[0]) == 0)
     {
         printf("User sending private message\n");
-
     }
-    
+
+    g_strfreev(msg);
+    g_strfreev(command);
 }
 
 gboolean iter_connections(gpointer key, gpointer value, gpointer data)
@@ -128,6 +136,14 @@ gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data)
     return 0;
 }
 
+gboolean iter_users(gpointer key, gpointer value, gpointer data)
+{
+    SSL* user_ssl = ((UserI*) data)->sslFd;
+    UserI* user = (UserI*) value;
+    debug_s(user->username);
+    SSL_write(user_ssl, user->username, strlen(user->username));
+    return 0;
+}
 
 gboolean iter_rooms(gpointer key, gpointer value, gpointer data)
 {
@@ -195,6 +211,7 @@ int run_server(int port_num)
 
     connectionList = g_tree_new((GCompareFunc) fd_cmp);
     roomsOnServerList = g_tree_new((GCompareFunc) room_name_cmp);
+    usersOnServerList = g_tree_new((GCompareFunc)g_ascii_strcasecmp);
     while(1)
     {
         fd_set readFdSet;
@@ -257,7 +274,6 @@ int run_server(int port_num)
                     initialize_user_struct(new_user);
                     new_user->sslFd = sslclient;
                     new_user->fd = clientSockFd;
-                    new_user->count_logins = 3;
                     g_tree_insert(connectionList, &new_user->fd, new_user);
                     if (SSL_write(sslclient, "Server: Welcome!", 16) == -1)
                     {
