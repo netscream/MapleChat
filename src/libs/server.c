@@ -7,14 +7,12 @@ gchar* user_get_hash(gchar* username)
     gchar *passwd64 = g_key_file_get_string(keyfile, "passwords",
             username, &error);
 
-    g_debug("%s", error->message);
-    gsize length;
-
     if( passwd64 == NULL )
     {
         return NULL;
     }
 
+    gsize length;
     gchar *passwd = g_base64_decode(passwd64, &length);
     return passwd;
 }
@@ -37,6 +35,7 @@ int user_authenticate(gchar* username, gchar* passwd)
         debug_s("Creating new user");
         /* New user, hash his password and store it */
         user_set_hash(username, passwd);
+        return 1;
     }
     else
     {
@@ -46,14 +45,17 @@ int user_authenticate(gchar* username, gchar* passwd)
         {
             debug_s("Password is correct");
             /* Authenticated */
+            return 1;
         }
         else
         {
             debug_s("Password is incorrect");
             /* Failed, can only happen 3 times until disconnect */
+            return 0;
         }
     }
 
+    return 0;
 }
 
 void process_message(char* message, struct userInformation* user)
@@ -65,8 +67,19 @@ void process_message(char* message, struct userInformation* user)
 
     if(g_strcmp0("USER", command[0]) == 0)
     {
-        user_authenticate(command[1], data);
-        printf("User logged in as %s with password %s\n", command[1], data);
+        if(user_authenticate(command[1], data))
+        {
+            printf("User logged in as %s\n", command[1], data);
+            gchar* usern = g_strdup(command[1]);
+            user->username = usern;
+            user->count_logins++;
+
+            g_tree_insert(usersOnServerList, user->username, user);
+        }
+        else
+        {
+            printf("Incorrect password for %s\n", command[1], data);
+        }
     }
     else if(g_strcmp0("LIST", command[0]) == 0)
     {
@@ -90,6 +103,7 @@ void process_message(char* message, struct userInformation* user)
         printf("joining this room  %s\n",command[1]);
         RoomI *room = NULL;
         room = g_tree_lookup(roomsOnServerList,command[1]);
+        printf("joining this room  %s\n",room);
         debug_s("Done looking \n");
         if(room  == NULL)
         {
@@ -107,13 +121,27 @@ void process_message(char* message, struct userInformation* user)
     else if(g_strcmp0("WHO", command[0]) == 0)
     {
         printf("User requested list of users\n");
+        gchar* list_of_users = g_strdup("");
+        debug_s(list_of_users);
+        g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_rooms_or_users, (gpointer) &list_of_users);
+        if (g_strcmp0("", list_of_users) != 0)
+        {
+            debug_s(list_of_users);
+            SSL_write(user->sslFd, list_of_users, strlen(list_of_users));
+        }
     }
     else if(g_strcmp0("PRIVMSG", command[0]) == 0)
     {
         printf("User sending private message\n");
-        g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_users_privmsg, (gpointer) data);
+        struct communication_message tmp;
+        tmp.from_user = (gchar*) user->username;
+        tmp.to_user = command[1];
+        tmp.message = data;
+        g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_users_privmsg, (gpointer) &tmp);
     }
-    
+
+    g_strfreev(msg);
+    g_strfreev(command);
 }
 
 gboolean iter_connections(gpointer key, gpointer value, gpointer data)
@@ -152,7 +180,6 @@ gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data)
     return 0;
 }
 
-
 gboolean iter_rooms_or_users(gpointer key, gpointer value, gpointer data)
 {
     /*SSL* user_ssl = ((UserI*) data)->sslFd;
@@ -161,28 +188,24 @@ gboolean iter_rooms_or_users(gpointer key, gpointer value, gpointer data)
     SSL_write(user_ssl, temp->room_name, strlen(temp->room_name));*/
     if (key != NULL)
     {
-        if ((gchar*) data == NULL)
-        {
-            data = (gpointer) g_strdup((gchar*) key);
-        }
-        else
-        {
-            gchar* tmp = g_strjoin(",", (gchar*) data, (gchar*) key);
-            g_free((gchar*) data);
-            data = (gpointer) tmp;
-        }
+        gchar* tmp = g_strjoin(",", *((gchar**) data), (gchar*) key, NULL);
+        g_free(*((gchar**) data));
+        *((gchar**) data) = (gpointer) tmp;
     }
     return 0;
 }
 
 gboolean iter_users_privmsg(gpointer key, gpointer value, gpointer data)
 {
-    char** temp_string = (char*) data;
-    if (g_strcmp0(temp_string[0], (char*) key) == 0)
+    gchar* to_user = ((struct communication_message*) data)->to_user;
+    debug_s(to_user);
+    if (g_strcmp0((gchar*) to_user, (gchar*) key) == 0)
     {
         UserI* temp = (UserI*) value;
-        char* send_string = (char*) temp_string[1];
-        SSL_write(temp->sslFd, temp_string[1], strlen(temp_string[1]));
+        gchar* send_string = g_strconcat("Privmsg from ", ((struct communication_message*) data)->from_user, " => ", ((struct communication_message*) data)->message, NULL);
+        debug_s(send_string);
+        SSL_write(temp->sslFd, send_string, strlen(send_string));
+        g_free(send_string);
         return 1;
     }
     return 0;
@@ -233,6 +256,7 @@ int run_server(int port_num)
 
     connectionList = g_tree_new((GCompareFunc) fd_cmp);
     roomsOnServerList = g_tree_new((GCompareFunc) room_name_cmp);
+    usersOnServerList = g_tree_new((GCompareFunc)g_ascii_strcasecmp);
     while(1)
     {
         fd_set readFdSet;
@@ -295,7 +319,6 @@ int run_server(int port_num)
                     initialize_user_struct(new_user);
                     new_user->sslFd = sslclient;
                     new_user->fd = clientSockFd;
-                    new_user->count_logins = 3;
                     g_tree_insert(connectionList, &new_user->fd, new_user);
                     if (SSL_write(sslclient, "Server: Welcome!", 16) == -1)
                     {

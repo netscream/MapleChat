@@ -33,7 +33,7 @@ GTree *usersOnServerList;
 GKeyFile *keyfile;
 
 /* Structures to be used for users */
-struct userInformation 
+struct userInformation
 {
     SSL *sslFd;
     int fd;
@@ -47,10 +47,10 @@ struct userInformation
 typedef struct userInformation UserI;
 /* end of structures for the users */
 
-struct room_information 
+struct room_information
 {
-	char* room_name;
-	GList *user_list;
+    char* room_name;
+    GList *user_list;
 };
 
 typedef struct room_information RoomI;
@@ -61,6 +61,13 @@ struct iterArguments {
     fd_set* readFdSet;
     int* max_fd;
 };
+
+struct communication_message {
+	gchar* from_user;
+	gchar* to_user;
+	gchar* message;
+};
+
 typedef struct iterArguments iterArgs;
 
 int run_server(int port_num);
