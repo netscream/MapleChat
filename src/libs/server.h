@@ -39,6 +39,7 @@ struct userInformation
     char *roomname;
     int count_logins;
     time_t login_timeout;
+    struct room_information* current_room;
 };
 
 struct room_information 
