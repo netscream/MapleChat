@@ -87,21 +87,23 @@ void get_header_time(char* buffer, int mode)
  * Function logToConsole
  * For client connection logging
  */
-void log_to_console(struct sockaddr_in client_addr, char *connection_state)
+void log_to_console(struct sockaddr_in *client_addr, char *connection_state)
 {
     debug_s("Logging to file");
     int len = 20;
     char cl_bugg[len];
+    memset(&cl_bugg, 0, len);
     char buffer[512];
     memset(&buffer, 0, 512);
     char the_time[21];
+    memset(&the_time, 0, 21);
     char port_id[2];
-    sprintf(port_id,"%d", ntohs(client_addr.sin_port));
+    sprintf(port_id,"%d", ntohs(client_addr->sin_port));
     get_header_time(the_time, 2);
     debug_s("Creating buffer");
     strcat(buffer, the_time); //time ISO-8601 compliant
     strcat(buffer, " : ");
-    strcat(buffer, inet_ntop(AF_INET, &(client_addr.sin_addr), cl_bugg, len)); //ip address
+    strcat(buffer, inet_ntop(AF_INET, &(client_addr->sin_addr), cl_bugg, len)); //ip address
     strcat(buffer, ":");
     strcat(buffer, port_id); //port
     strcat(buffer, " ");
@@ -111,4 +113,40 @@ void log_to_console(struct sockaddr_in client_addr, char *connection_state)
     printf("%s", buffer);
     debug_s("Returning from logtofile");
     return;
+}
+
+void print_SSL_error(int err)
+{
+    switch (err)
+    {
+        case SSL_ERROR_NONE: // Success
+            break;
+        case SSL_ERROR_SSL:
+            printf("SSL_ERROR_SSL:\n");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+        case SSL_ERROR_WANT_READ:
+            printf ("SSL_ERROR_WANT_READ:\n");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+        case SSL_ERROR_WANT_WRITE:
+            printf("SSL_ERROR_WANT_WRITE:\n");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+        case SSL_ERROR_WANT_CONNECT:
+            printf("SSL_ERROR_WANT_CONNECT:\n");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+        case SSL_ERROR_SYSCALL:
+            printf("SSL_ERROR_SYSCALL:\n");
+            exit(1);
+        case SSL_ERROR_ZERO_RETURN:
+            printf("SSL_ERROR_SYSCALL:\n");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+        default:
+            printf("Unknown error:");
+            ERR_print_errors_fp(stderr);
+            exit(1);
+    }
 }

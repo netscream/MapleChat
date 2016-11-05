@@ -103,7 +103,7 @@ gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data)
  * The main server function
  * Creates a loop for the server run
  */
-int runServer(int PortNum)
+int run_server(int port_num)
 {
     int sockFd = -1, max_fd = 0;
     struct  sockaddr_in server;
@@ -111,20 +111,20 @@ int runServer(int PortNum)
     int opt = 1;
 
     /* Print the banner */
-    printBanner();
+    print_banner();
     /* openssl implementation */
-    theSSLctx = initializeOpenSSLCert();
+    theSSLctx = initialize_open_SSL_cert();
     if (theSSLctx == NULL)
     {
-        debugS("CTX not initalized");
+        debug_s("CTX not initalized");
         exit(1);
     }
     /* server implementation */
 
     /* Lets initalize the server attributes  */
-    server = serverStructInit(PortNum);
-    sockFd = initalizeServer(PortNum, server);
-    debugSockAddr("Server ip = ", server);
+    server = server_struct_init(port_num);
+    sockFd = initalize_server(port_num, server);
+    debug_sockaddr("Server ip = ", server);
     /* Run the server FOREVER */
 
     /* Allow multiple binds on main socket, this prevents blocking when debugging */
@@ -186,50 +186,49 @@ int runServer(int PortNum)
             sslclient = SSL_new(theSSLctx);
             if (sslclient != NULL)
             {
-                debugS("NEW SSL != NULL");
+                debug_s("NEW SSL != NULL");
                 int sslErr = -1;
                 sslErr = SSL_set_fd(sslclient, clientSockFd);
                 if (sslErr < 0)
                 {
-                    debugS("SSL_set_fd error: ");
+                    debug_s("SSL_set_fd error: ");
                     ERR_print_errors_fp(stderr);
                 }
 
                 sslErr = SSL_accept(sslclient);
-                debugD("SSL ACCEPT = ", sslErr);
+                debug_d("SSL ACCEPT = ", sslErr);
                 if (sslErr > 0)
                 {
-                    debugS("STUFF");
-                    //logger((struct sockaddr_in*) client, 0); //report connection to console
-                    UserI *newUser = g_new0(UserI, 1); //create new User struct
-                    initializeUserStruct(newUser);
-                    newUser->sslFd = sslclient;
-                    newUser->fd = clientSockFd;
-                    newUser->countLogins = 3;
-                    g_tree_insert(connectionList, &newUser->fd, newUser);
+                    debug_s("STUFF");
+                    UserI *new_user = g_new0(UserI, 1); //create new User struct
+                    initialize_user_struct(new_user);
+                    new_user->sslFd = sslclient;
+                    new_user->fd = clientSockFd;
+                    new_user->count_logins = 3;
+                    g_tree_insert(connectionList, &new_user->fd, new_user);
                     if (SSL_write(sslclient, "Server: Welcome!", 16) == -1)
                     {
-                        debugS("SSL_WRITE error:");
+                        debug_s("SSL_WRITE error:");
                         ERR_print_errors_fp(stderr);
                     }
-
+                    log_to_console(&client, "connected");
                     continue;
                 }
                 else if (sslErr <= 0 || sslErr > 1)
                 {
-                    debugS("SSL accept error:");
+                    debug_s("SSL accept error:");
                     ERR_print_errors_fp(stderr);
                 }
             }
             else
             {
-                debugS("SSL new error");
+                debug_s("SSL new error");
                 perror("SSL NEW ERROR = ");
                 ERR_print_errors_fp(stderr);
             }
         }
 
-        debugS("Processing clients");
+        debug_s("Processing clients");
         /* TODO: Iterate through all of the clients and check if */
         /* their socket is active */
         g_tree_foreach(connectionList, (GTraverseFunc)iter_connections, &readFdSet);
@@ -250,28 +249,28 @@ int runServer(int PortNum)
  * Function serverStructInit()
  * returns a struct for the server initalization
  */
-struct sockaddr_in serverStructInit(int PortNum)
+struct sockaddr_in server_struct_init(int port_num)
 {
     struct sockaddr_in server;
     memset(&server, 0, sizeof(server));
     server.sin_family = AF_INET;
-    server.sin_port = htons(PortNum);
+    server.sin_port = htons(port_num);
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     return server;
 }
 
 
 /*
- * Function initalizeServer()
+ * Function initalize_server()
  * Creates server structure
  * Creates socket
  * Binds to socket
  * Listens to sockets
  * returns sockfd
  */
-int initalizeServer(const int PortNum, struct sockaddr_in server)
+int initalize_server(const int port_num, struct sockaddr_in server)
 {
-    debugS("Initializing the server!");
+    debug_s("Initializing the server!");
     int sockFd;
 
     sockFd = socket(AF_INET, SOCK_STREAM, 0);
@@ -304,9 +303,9 @@ int initalizeServer(const int PortNum, struct sockaddr_in server)
  * For SSL library initalization and configuration
  *
  */
-SSL_CTX* initializeOpenSSLCert()
+SSL_CTX* initialize_open_SSL_cert()
 {
-    debugS("Initializing the openssl certification!");
+    debug_s("Initializing the openssl certification!");
     SSL_CTX* theSSLctx;
     SSL_library_init();         //initialize library
     OpenSSL_add_all_algorithms(); //add digest and ciphers
@@ -375,14 +374,14 @@ gint fd_cmp(gconstpointer fd1,  gconstpointer fd2, gpointer G_GNUC_UNUSED data)
 
 void logger(struct sockaddr_in *client, int type)
 {
-    debugS("Logging to file");
-    char portNum[2];
+    debug_s("Logging to file");
+    char port_num[2];
     char buffer[512];
     char theTime[21];
     int len = 20;
     char clBugg[len];
-    sprintf(portNum, "%d", ntohs(client->sin_port));
-    getHeaderTime(theTime, 2);
+    sprintf(port_num, "%d", ntohs(client->sin_port));
+    get_header_time(theTime, 2);
     FILE *logfp = NULL;
     logfp = fopen(LOGFILE, "a+");
     if (logfp == NULL)
@@ -390,12 +389,12 @@ void logger(struct sockaddr_in *client, int type)
         perror("Open logfile error: ");
         return;
     }
-    debugS("Creating log buffer");
+    debug_s("Creating log buffer");
     strcat(buffer, theTime);
     strcat(buffer, " : ");
     strcat(buffer, inet_ntop(AF_INET, &(client->sin_addr), clBugg, len));
     strcat(buffer, ":");
-    strcat(buffer, portNum);
+    strcat(buffer, port_num);
     if (type == 0)
     {
         strcat(buffer, " connected");
@@ -413,13 +412,13 @@ void logger(struct sockaddr_in *client, int type)
     return;
 }
 
-void initializeUserStruct(struct userInformation *newUser)
+void initialize_user_struct(struct userInformation *new_user)
 {
-    newUser->sslFd = NULL;
-    newUser->fd = -1;
-    newUser->username = NULL;
-    newUser->nickname = NULL;
-    newUser->roomname = NULL;
-    newUser->countLogins = 0;
-    newUser->logintTimeout = 0;
+    new_user->sslFd = NULL;
+    new_user->fd = -1;
+    new_user->username = NULL;
+    new_user->nickname = NULL;
+    new_user->roomname = NULL;
+    new_user->count_logins = 0;
+    new_user->login_timeout = 0;
 }
