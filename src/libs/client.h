@@ -1,4 +1,4 @@
-#ifndef CLIENT_H
+#ifndef CLIENT_
 #define CLIENT_H
 #include <assert.h>
 #include <sys/select.h>
@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <signal.h>
+#include <glib.h>
 
 /* Secure socket layer headers */
 #include <openssl/ssl.h>

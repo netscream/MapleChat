@@ -1,15 +1,27 @@
 #include "server.h"
 
+void process_message(char* message)
+{
+    gchar** command = g_strsplit(message, " ", 0);
+
+    if(g_strcmp0("USER", command[0]) == 0)
+        printf("User logged in as %s\n", command[1]);
+    if(g_strcmp0("LIST", command[0]) == 0)
+        printf("User requested list\n");
+
+}
+
 gboolean iter_connections(gpointer key, gpointer value, gpointer data) {
     UserI* user = (UserI* ) value;
 
     if (FD_ISSET(user->fd, (fd_set *)data))
     {
         printf("Socket %d is active\n", user->fd);
-	char message[512];
-	memset(message, 0, sizeof(message));
-	SSL_read(user->sslFd, message, sizeof(message));
-	printf("Skilaboðin voru -> %s \n", message);
+        char message[512];
+        memset(message, 0, sizeof(message));
+        SSL_read(user->sslFd, message, sizeof(message));
+        printf("Message: %s\n", message);
+        process_message(message);
     }
     else
     {
@@ -24,8 +36,6 @@ gboolean iter_connections(gpointer key, gpointer value, gpointer data) {
 gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data) {
     UserI* user = (UserI* ) value;
     iterArgs* args = (iterArgs *) data;
-
-    printf("Marking %d\n", user->fd);
 
     FD_SET(user->fd, args->readFdSet);
 
@@ -50,7 +60,7 @@ int runServer(int PortNum)
 
     /* Print the banner */
     printBanner();
-	/* openssl implementation */
+    /* openssl implementation */
     theSSLctx = initializeOpenSSLCert();
     if (theSSLctx == NULL)
     {
@@ -276,31 +286,31 @@ SSL_CTX* initializeOpenSSLCert()
    the address of a connection. */
 int sockaddr_in_cmp(const void *addr1, const void *addr2)
 {
-     const struct sockaddr_in *_addr1 = addr1;
-     const struct sockaddr_in *_addr2 = addr2;
+    const struct sockaddr_in *_addr1 = addr1;
+    const struct sockaddr_in *_addr2 = addr2;
 
-     /* If either of the pointers is NULL or the addresses */
-     /* belong to different families, we abort. */
+    /* If either of the pointers is NULL or the addresses */
+    /* belong to different families, we abort. */
 
-     g_assert((_addr1 == NULL) || (_addr2 == NULL) ||
-              (_addr1->sin_family != _addr2->sin_family));
+    g_assert((_addr1 == NULL) || (_addr2 == NULL) ||
+            (_addr1->sin_family != _addr2->sin_family));
 
-     if (_addr1->sin_addr.s_addr < _addr2->sin_addr.s_addr) {
-          return -1;
-     } else if (_addr1->sin_addr.s_addr > _addr2->sin_addr.s_addr) {
-          return 1;
-     } else if (_addr1->sin_port < _addr2->sin_port) {
-          return -1;
-     } else if (_addr1->sin_port > _addr2->sin_port) {
-          return 1;
-     }
+    if (_addr1->sin_addr.s_addr < _addr2->sin_addr.s_addr) {
+        return -1;
+    } else if (_addr1->sin_addr.s_addr > _addr2->sin_addr.s_addr) {
+        return 1;
+    } else if (_addr1->sin_port < _addr2->sin_port) {
+        return -1;
+    } else if (_addr1->sin_port > _addr2->sin_port) {
+        return 1;
+    }
 }
 
 /* This can be used to build instances of GTree that index on
    the file descriptor of a connection. */
 gint fd_cmp(gconstpointer fd1,  gconstpointer fd2, gpointer G_GNUC_UNUSED data)
 {
-     return GPOINTER_TO_INT(fd1) - GPOINTER_TO_INT(fd2);
+    return GPOINTER_TO_INT(fd1) - GPOINTER_TO_INT(fd2);
 }
 
 void logger(struct sockaddr_in *client, int type)
@@ -331,10 +341,10 @@ void logger(struct sockaddr_in *client, int type)
         strcat(buffer, " connected");
     }
     else
-    if (type == 1)
-    {
-        strcat(buffer, " disconnected");
-    }
+        if (type == 1)
+        {
+            strcat(buffer, " disconnected");
+        }
     strcat(buffer, "\r\n");
     fprintf(logfp, "%s", buffer);
     printf("%s", buffer);
