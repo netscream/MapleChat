@@ -103,7 +103,7 @@ void log_to_console(struct sockaddr_in *client_addr, char *connection_state)
     debug_s("Creating buffer");
     strcat(buffer, the_time); //time ISO-8601 compliant
     strcat(buffer, " : ");
-    strcat(buffer, inet_ntop(AF_INET, &(client_addr->sin_addr), cl_bugg, len)); //ip address
+    strcat(buffer, inet_ntop(AF_INET, &(client_addr)->sin_addr, cl_bugg, len)); //ip address
     strcat(buffer, ":");
     strcat(buffer, port_id); //port
     strcat(buffer, " ");
