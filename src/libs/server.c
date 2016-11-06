@@ -162,9 +162,9 @@ void process_message(char* message, struct userInformation* user)
         {
             struct room_information* tmp_room = user->current_room;
             printf("g_list length = %d\n", g_list_length(tmp_room->user_list));
-            tmp_room->user_list = g_list_remove(tmp_room->user_list, user->username);
+            tmp_room->user_list = g_list_remove(tmp_room->user_list, user);
             printf("g_list length = %d\n", g_list_length(tmp_room->user_list));
-            if (g_list_length(tmp_room->user_list) == 0)
+            if (g_list_length(tmp_room->user_list) == 1)
             {
                 g_list_free(tmp_room->user_list);
                 gchar* tmp = g_strdup(tmp_room->room_name);
@@ -185,7 +185,7 @@ void process_message(char* message, struct userInformation* user)
         {
             room = g_new0(RoomI,1);
             room->room_name = g_strdup(command[1]);
-            room->user_list = g_list_append(room->user_list, user->username);
+            room->user_list = g_list_append(room->user_list, user);
             debug_s("new room created  \n");
             g_tree_insert(roomsOnServerList, (gchar*) room->room_name, room);
             debug_s("done creating/found room \n");
@@ -193,7 +193,7 @@ void process_message(char* message, struct userInformation* user)
         else
         {
             printf("g_list length = %d\n", g_list_length(room->user_list));
-            room->user_list = g_list_append(room->user_list, user->username);
+            room->user_list = g_list_append(room->user_list, user);
             printf("g_list length = %d\n", g_list_length(room->user_list));
         }
         user->current_room = (struct room_information*) room;
@@ -228,20 +228,26 @@ void process_message(char* message, struct userInformation* user)
     {
         debug_s("User sending message to channel\n");
         struct room_information* user_room = user->current_room;
-        gchar* send_message = g_strconcat(user_room->room_name, " ", "<", user->username ,">:", data, NULL);
-        GList *tmp = user_room->user_list;
-        while (tmp != NULL)
+        if (user_room != NULL)
         {
-            struct userInformation* tmpUser = NULL;
-            debug_s(tmp->data);
-            tmpUser = g_tree_search(usersOnServerList, (GCompareFunc) gstring_is_equal, wtmp->data);
-            if (tmpUser != NULL)
+            debug_s("User room is not NULL");
+            gchar* send_message = g_strconcat(user_room->room_name, " ", "<", user->username ,">:", data, NULL);
+            GList *tmp = user_room->user_list;
+            while (tmp != NULL)
             {
-                SSL_write(tmpUser->sslFd, send_message, strlen(send_message));
+                struct userInformation* tmpUser = NULL;
+                tmpUser = tmp->data;
+                //debug_s(tmp->data);
+                //tmpUser = g_tree_search(usersOnServerList, (GCompareFunc) gstring_is_equal, wtmp->data);
+                if (tmpUser != NULL)
+                {
+                    debug_s(tmpUser->username);
+                    SSL_write(tmpUser->sslFd, send_message, strlen(send_message));
+                }
+                tmp = g_list_next(tmp);
             }
-            tmp = g_list_next(tmp);
+            g_free(send_message);
         }
-        g_free(send_message);
     }
 
     g_strfreev(msg);
