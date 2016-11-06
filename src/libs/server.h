@@ -44,6 +44,7 @@ struct userInformation
     int count_logins;
     time_t login_timeout;
     struct room_information* current_room;
+    struct sockaddr_in* client;
 };
 typedef struct userInformation UserI;
 /* end of structures for the users */

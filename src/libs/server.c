@@ -442,7 +442,7 @@ int run_server(int port_num)
         {
             struct sockaddr_in *client = g_new0(struct sockaddr_in, 1);
             socklen_t clienLength = (socklen_t) sizeof(client);
-            clientSockFd = accept(sockFd, (struct sockaddr*) &client, &clienLength);
+            clientSockFd = accept(sockFd, (struct sockaddr*) client, &clienLength);
 
             sslclient = SSL_new(theSSLctx);
             if (sslclient != NULL)
@@ -465,13 +465,15 @@ int run_server(int port_num)
                     initialize_user_struct(new_user);
                     new_user->sslFd = sslclient;
                     new_user->fd = clientSockFd;
+                    new_user->client = client;
                     g_tree_insert(connectionList, &new_user->fd, new_user);
                     if (SSL_write(sslclient, "Server: Welcome!", 16) == -1)
                     {
                         debug_s("SSL_WRITE error:");
                         ERR_print_errors_fp(stderr);
                     }
-                    log_to_console(&client, "connected");
+                    debug_s("before log to console");
+                    log_to_console(client, "connected");
                     continue;
                 }
                 else if (sslErr <= 0 || sslErr > 1)
