@@ -128,12 +128,12 @@ void process_message(char* message, struct userInformation* user)
     gchar** command = g_strsplit(msg[0], " ", 0);
     if ((g_strcmp0("USER", command[0]) != 0) && user->username == NULL)
     {
-        SSL_write(user->sslFd, 
+        SSL_write(user->sslFd,
                 "User needs to be authenticated to user server\n",
                 strlen("User needs to be authenticated to user server\n"));
         return;
     }
-    
+
     if(g_strcmp0("USER", command[0]) == 0)
     {
         if (data == NULL)
@@ -170,7 +170,6 @@ void process_message(char* message, struct userInformation* user)
             g_free(list_of_chans);
             SSL_write(user->sslFd, tmp, strlen(tmp));
         }
-
     }
     else if(g_strcmp0("JOIN", command[0]) == 0){
         debug_s("user wants to join ");
@@ -191,7 +190,7 @@ void process_message(char* message, struct userInformation* user)
             user->current_room = NULL;
             debug_s("Old room removed \n");
         }
-        
+
         printf("joining this room  %s\n",command[1]);
         RoomI *room = NULL;
         debug_s(command[1]);
@@ -506,6 +505,7 @@ int run_server(int port_num)
     ERR_remove_state(0);
     ERR_free_strings();
 }
+
 /*
  * Function serverStructInit()
  * returns a struct for the server initalization
@@ -519,7 +519,6 @@ struct sockaddr_in server_struct_init(int port_num)
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     return server;
 }
-
 
 /*
  * Function initalize_server()

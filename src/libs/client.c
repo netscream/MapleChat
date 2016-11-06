@@ -75,13 +75,13 @@ int run_client(const char* server_ip, const int port_num)
             printf("%s\n", message);
             for (;;)
             {
-                    if (read(exitfd[0], &signum, sizeof(signum)) == -1) 
+                    if (read(exitfd[0], &signum, sizeof(signum)) == -1)
                     {
-                            if (errno == EAGAIN) 
+                            if (errno == EAGAIN)
                             {
                                     break;
-                            } 
-                            else 
+                            }
+                            else
                             {
                                     perror("read()");
                                     exit(EXIT_FAILURE);
@@ -244,11 +244,11 @@ void readline_callback(char *line)
         signal_handler(SIGTERM);
         return;
     }
-    
+
     if (strlen(line) > 0) {
         add_history(line);
     }
-    
+
     if ((strncmp("/bye", line, 4) == 0) ||
             (strncmp("/quit", line, 5) == 0)) {
         rl_callback_handler_remove();
@@ -363,13 +363,13 @@ void readline_callback(char *line)
         }
         char *new_user = strdup(&(line[i]));
 
-        /* char passwd[48]; */
-        /* getpasswd("Password: ", passwd, 48); */
+        char passwd[48];
+        getpasswd("Password: ", passwd, 48);
         rl_redisplay();
 
         /* Process and send this information to the server. */
         user_name = new_user;
-        gchar* request = g_strconcat("USER ", new_user, NULL);
+        gchar* request = g_strconcat("USER ", new_user, ":", passwd, NULL);
         if (SSL_write(server_ssl, request, strlen(request)) == -1)
         {
             debug_s("SSL_WRITE error:");
