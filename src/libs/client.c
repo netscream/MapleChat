@@ -70,12 +70,12 @@ int run_client(const char* server_ip, const int port_num)
             /* We received a signal. */
             int signum;
 
-            char message[512];
+            /*char message[512];
             if (SSL_read(server_ssl, message, sizeof(message)) == -1)
             {
                 perror("SSL read error: ");
             }
-            printf("%s\n", message);
+            printf("%s\n", message);*/
             for (;;)
             {
                     if (read(exitfd[0], &signum, sizeof(signum)) == -1)
@@ -320,7 +320,7 @@ void readline_callback(char *line)
         gchar* tmp = "";
         if (user_name != NULL)
         {
-            tmp = g_strconcat("(", user_name, ") ", chat_room, " > ", NULL);
+            tmp = g_strconcat("(", user_name, ") ", chat_room, "> ", NULL);
         }
         else
         {

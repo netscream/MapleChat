@@ -5,17 +5,25 @@ gboolean iter_live_connections(gpointer key, gpointer value, gpointer data)
     debug_s("Looping through iter_live_connections");
     UserI* user = (UserI* ) value;
    
-    gchar* msg = g_strconcat("PING\n", NULL);
-    SSL_write(user->sslFd, msg, sizeof(msg));
-    char message[512];
-    memset(message, 0, sizeof(message));
-    SSL_read(user->sslFd, message, sizeof(message));
-    if(message == NULL || strcmp("", message) == 0)
+    if ((*(int*) key) == user->fd)
     {
-        disconnect_user(user);
+        gchar* msg = g_strconcat("PING\n", NULL);
+        fd_set read_set = (*(fd_set*) data);
+        if (FD_ISSET(user->fd, &read_set))
+        {
+            SSL_write(user->sslFd, msg, sizeof(msg));
+            char message[512];
+            memset(message, 0, sizeof(message));
+            SSL_read(user->sslFd, message, sizeof(message));
+            if(message == NULL || strcmp("", message) == 0)
+            {
+                disconnect_user(user);
+            }
+        }
     }
     return 0;
 }
+
 gboolean iter_connections(gpointer key, gpointer value, gpointer data)
 {
     UserI* user = (UserI* ) value;

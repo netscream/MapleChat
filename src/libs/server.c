@@ -290,14 +290,8 @@ int sockaddr_in_cmp(const void *addr1, const void *addr2)
    the file descriptor of a connection. */
 gint fd_cmp(gconstpointer fd1,  gconstpointer fd2, gpointer G_GNUC_UNUSED data)
 {
-    //return GPOINTER_TO_INT(((UserI*) user1)->fd) - GPOINTER_TO_INT(((UserI*) user2)->fd);
     return GPOINTER_TO_INT(fd1) - GPOINTER_TO_INT(fd2);
 }
-
-/*gint room_name_cmp(gconstpointer A,  gconstpointer B, gpointer G_GNUC_UNUSED data)
-{
-    return g_strcmp0(((struct room_information*) A)->room_name, ((struct room_information*)B)->room_name);
-}*/
 
 void logger(struct sockaddr_in *client, int type)
 {
