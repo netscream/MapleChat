@@ -6,10 +6,10 @@ CFLAGS = -std=gnu11 -O2 -g -Wall -Wextra -Wformat=2 $(shell pkg-config glib-2.0 
 
 all: chatd chat
 
-chat: chat.o client.o getpasswd.o debugging.o printing.o
+chat: chat.o client.o getpasswd.o debugging.o printing.o authentication.o iterators.o processing.o
 	$(CC) $(GLIBS) $(CFLAGS) -o $@ $^ -lreadline $(shell pkg-config glib-2.0 openssl --libs)
 
-chatd: chatd.o server.o debugging.o printing.o
+chatd: chatd.o server.o debugging.o printing.o authentication.o iterators.o processing.o
 	$(CC) $(GLIBS) $(CFLAGS) -o $@ $^ $(shell pkg-config glib-2.0 openssl --libs) -lm
 
 chatd.o:
@@ -23,6 +23,15 @@ debugging.o: libs/debugging.c
 
 printing.o: libs/printing.c
 	${CC} ${CFLAGS} ${GLIBS} libs/printing.c -c
+
+authentication.o: libs/authentication.c
+	${CC} ${CFLAGS} ${GLIBS} libs/authentication.c -c
+
+iterators.o: libs/iterators.c
+	${CC} ${CFLAGS} ${GLIBS} libs/iterators.c -c
+
+processing.o: libs/processing.c
+	${CC} ${CFLAGS} ${GLIBS} libs/processing.c -c
 
 server.o: libs/server.c
 	${CC} ${CFLAGS} ${GLIBS} libs/server.c -c

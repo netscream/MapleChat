@@ -19,6 +19,9 @@
 
 #include "debugging.h"
 #include "printing.h"
+#include "user.h"
+#include "authentication.h"
+#include "iterators.h"
 #define LOGFILE "./chatd.log"
 /* Openssl definations */
 #define OPENSSL_SERVER_CERT "cert/fd.crt"
