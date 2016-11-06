@@ -25,6 +25,7 @@
 #include <readline/history.h>
 #include "debugging.h"
 #include "printing.h"
+#include "getpasswd.h"
 
 #define OPENSSL_SERVER_CERT "cert/fd.crt"
 /* This variable holds a file descriptor of a pipe on which we send a

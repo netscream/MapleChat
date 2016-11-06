@@ -28,6 +28,7 @@ int run_client(const char* server_ip, const int port_num)
     prompt = strdup("> ");
     rl_callback_handler_install(prompt, (rl_vcpfunc_t*) &readline_callback);
     for (;;) {
+        rl_set_prompt(prompt);
         //debug_s("For loop in run server");
         fd_set rfds;
         struct timeval timeout;
@@ -56,10 +57,16 @@ int run_client(const char* server_ip, const int port_num)
             break;
         }
         if (r == 0) {
-            /*write(STDOUT_FILENO, "No message?\n", 12);
-            fsync(STDOUT_FILENO); /*
+            
+            /*
+            write(STDOUT_FILENO, "No message?\n", 12);
+            fsync(STDOUT_FILENO); 
+            */
+            
+
             /* Whenever you print out a message, call this
                to reprint the current input line. */
+            rl_set_prompt(prompt);
             rl_redisplay();
             continue;
         }
@@ -118,9 +125,10 @@ int run_client(const char* server_ip, const int port_num)
             else
             {
                 /* Just print out the message */
-                printf("%s", message);
+                printf("%s\n", message);
             }
         }
+        
     }
     int sslErr = -1;
     sslErr = SSL_shutdown(server_ssl);
@@ -294,20 +302,36 @@ void readline_callback(char *line)
             rl_redisplay();
             return;
         }
+        if (chat_room != NULL)
+        {
+            free(chat_room);
+            chat_room = NULL;
+        }
         char *chatroom = strdup(&(line[i]));
         chat_room = chatroom;
+
+        /* Process and send this information to the server. */
         gchar* request = g_strconcat("JOIN ", chatroom, NULL);
         if (SSL_write(server_ssl, request, strlen(request)) == -1)
         {
             debug_s("SSL_WRITE error:");
             ERR_print_errors_fp(stderr);
         }
-
-        /* Process and send this information to the server. */
+        g_free(request);
 
         /* Maybe update the prompt. */
+        gchar* tmp = "";
+        if (user_name != NULL)
+        {
+            tmp = g_strconcat("(", user_name, ") ", chat_room, " >", NULL);
+        }
+        else
+        {
+            tmp = g_strconcat(chat_room, ">", NULL);
+        }
         free(prompt);
-        prompt = NULL; /* What should the new prompt look like? */
+        prompt = strdup((char*) tmp);
+        g_free(tmp);
         rl_set_prompt(prompt);
         return;
     }
@@ -321,11 +345,13 @@ void readline_callback(char *line)
             ERR_print_errors_fp(stderr);
         }
         /* Query all available chat rooms */
+        rl_set_prompt(prompt);
         return;
     }
     else
     if (strncmp("/roll", line, 5) == 0) {
         /* roll dice and declare winner. */
+        rl_set_prompt(prompt);
         return;
     }
     else
@@ -374,6 +400,11 @@ void readline_callback(char *line)
             rl_redisplay();
             return;
         }
+        if (user_name != NULL)
+        {
+            free(user_name);
+            user_name = NULL;
+        }
         char *new_user = strdup(&(line[i]));
 
         char passwd[48];
@@ -393,8 +424,19 @@ void readline_callback(char *line)
 
         /* Maybe update the prompt. */
         free(prompt);
-        prompt = NULL; /* What should the new prompt look like? */
+        gchar* tmp = "";
+        if (chat_room != NULL)
+        {
+            tmp = g_strconcat("(", user_name, ") ", chat_room, "> ", NULL);
+        }
+        else
+        {
+            tmp = g_strconcat("(", user_name, ") ", "> ", NULL);
+        }
+        prompt = strdup((char*) tmp);
+        g_free(tmp);
         rl_set_prompt(prompt);
+        rl_redisplay();
         return;
     }
     else
@@ -405,6 +447,7 @@ void readline_callback(char *line)
             debug_s("SSL_WRITE error:");
             ERR_print_errors_fp(stderr);
         }
+        rl_set_prompt(prompt);
         return;
     }
     else
@@ -415,6 +458,7 @@ void readline_callback(char *line)
     }
     write(STDOUT_FILENO, buffer, strlen(buffer));
     fsync(STDOUT_FILENO);
+    rl_set_prompt(prompt);
 }
 
 void initialize_openSSL_cert()
