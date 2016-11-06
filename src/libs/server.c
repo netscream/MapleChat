@@ -122,28 +122,30 @@ int user_authenticate(gchar* username, gchar* passwd)
 
 void process_message(char* message, struct userInformation* user)
 {
+
     gchar** msg = g_strsplit(message, ":", 0);
     gchar* data = msg[1];
+    gchar* log_message;
 
     gchar** command = g_strsplit(msg[0], " ", 0);
     if ((g_strcmp0("USER", command[0]) != 0) && user->username == NULL)
     {
-        SSL_write(user->sslFd, 
+        SSL_write(user->sslFd,
                 "User needs to be authenticated to user server\n",
                 strlen("User needs to be authenticated to user server\n"));
         return;
     }
-    
+
     if(g_strcmp0("USER", command[0]) == 0)
     {
         if (data == NULL)
         {
             SSL_write(user->sslFd, "Empty password obtained\n", 24);
         }
-        else
-        if(user_authenticate(command[1], data))
+        else if(user_authenticate(command[1], data))
         {
-            printf("User logged in as %s\n", command[1]);
+            log_message = g_strconcat(command[1], "authenticated", NULL);
+            /* log_to_console(user->sock, log_message); */
             gchar* usern = g_strdup(command[1]);
             user->username = usern;
             if (user->nickname == NULL)
@@ -155,8 +157,11 @@ void process_message(char* message, struct userInformation* user)
         }
         else
         {
+            log_message = g_strconcat(command[1], "authentication error", NULL);
+            /* log_to_console(user->sock, log_message); */
             printf("Incorrect password for %s\n", command[1]);
         }
+        g_free(log_message);
     }
     else if(g_strcmp0("LIST", command[0]) == 0)
     {
@@ -170,7 +175,6 @@ void process_message(char* message, struct userInformation* user)
             g_free(list_of_chans);
             SSL_write(user->sslFd, tmp, strlen(tmp));
         }
-
     }
     else if(g_strcmp0("JOIN", command[0]) == 0){
         debug_s("user wants to join ");
@@ -191,7 +195,7 @@ void process_message(char* message, struct userInformation* user)
             user->current_room = NULL;
             debug_s("Old room removed \n");
         }
-        
+
         printf("joining this room  %s\n",command[1]);
         RoomI *room = NULL;
         debug_s(command[1]);
@@ -239,6 +243,10 @@ void process_message(char* message, struct userInformation* user)
         tmp.to_user = command[1];
         tmp.message = data;
         g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_users_privmsg, (gpointer) &tmp);
+    }
+    else if(g_strcmp0("PONG", command[0]) == 0)
+    {
+        debug_s("hey look at meee\n");
     }
     else /* lets assume everything else is a message to channel */
     {
@@ -291,9 +299,17 @@ gboolean iter_live_connections(gpointer key, gpointer value, gpointer data)
     struct timeval tv;
     tv.tv_sec = 30;
     tv.tv_usec = 0;
-    gchar* message = g_strconcat("PING\n", NULL);
-    SSL_write(user->sslFd, message, sizeof(message));
-    
+    gchar* msg = g_strconcat("PING\n", NULL);
+    SSL_write(user->sslFd, msg, sizeof(msg));
+    char message[512];
+    memset(message, 0, sizeof(message));
+    SSL_read(user->sslFd, message, sizeof(message));
+
+    if(message != NULL && strcmp("", message) != 0)
+    {
+        process_message(message , (struct userInformation*) user);
+    }
+
 
     return 0;
 }
@@ -309,7 +325,10 @@ gboolean iter_connections(gpointer key, gpointer value, gpointer data)
         memset(message, 0, sizeof(message));
         SSL_read(user->sslFd, message, sizeof(message));
         printf("Message: %s\n", message);
-        process_message(message , (struct userInformation*) user);
+        if(message != NULL && strcmp("", message) != 0)
+        {
+            process_message(message , (struct userInformation*) user);
+        }
     }
     else
     {
@@ -474,7 +493,7 @@ int run_server(int port_num)
                 debug_d("SSL ACCEPT = ", sslErr);
                 if (sslErr > 0)
                 {
-                    debug_s("STUFF");
+                    debug_s("Creating new connection");
                     UserI *new_user = g_new0(UserI, 1); //create new User struct
                     initialize_user_struct(new_user);
                     new_user->sslFd = sslclient;
@@ -520,6 +539,7 @@ int run_server(int port_num)
     ERR_remove_state(0);
     ERR_free_strings();
 }
+
 /*
  * Function serverStructInit()
  * returns a struct for the server initalization
@@ -533,7 +553,6 @@ struct sockaddr_in server_struct_init(int port_num)
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     return server;
 }
-
 
 /*
  * Function initalize_server()

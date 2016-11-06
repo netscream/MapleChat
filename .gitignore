@@ -32,5 +32,9 @@
 *.dSYM/
 *.su
 
+#password file
+*.ini
+
 src/chatd
 src/chat
+
