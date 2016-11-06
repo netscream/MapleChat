@@ -28,8 +28,6 @@ int run_client(const char* server_ip, const int port_num)
     prompt = strdup("> ");
     rl_callback_handler_install(prompt, (rl_vcpfunc_t*) &readline_callback);
     for (;;) {
-        rl_set_prompt(prompt);
-        //debug_s("For loop in run server");
         fd_set rfds;
         struct timeval timeout;
 
@@ -42,8 +40,7 @@ int run_client(const char* server_ip, const int port_num)
         FD_SET(server_fd, &rfds);
         timeout.tv_sec = 2;
         timeout.tv_usec = 0;
-        //debugD("serverfd = ", server_fd);
-        //debugD("exitfd = ", exitfd[0]);
+
         int r = select(exitfd[0] + 3, &rfds, NULL, NULL, &timeout);
         if (r < 0) {
             if (errno == EINTR) {
@@ -66,7 +63,6 @@ int run_client(const char* server_ip, const int port_num)
 
             /* Whenever you print out a message, call this
                to reprint the current input line. */
-            rl_set_prompt(prompt);
             rl_redisplay();
             continue;
         }
@@ -127,6 +123,7 @@ int run_client(const char* server_ip, const int port_num)
                 /* Just print out the message */
                 printf("%s\n", message);
             }
+            rl_forced_update_display();
         }
         
     }
