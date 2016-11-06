@@ -284,6 +284,19 @@ void process_message(char* message, struct userInformation* user)
         return 0;
     }
 }*/
+gboolean iter_live_connections(gpointer key, gpointer value, gpointer data)
+{
+    UserI* user = (UserI* ) value;
+
+    struct timeval tv;
+    tv.tv_sec = 30;
+    tv.tv_usec = 0;
+    gchar* message = g_strconcat("PING\n", NULL);
+    SSL_write(user->sslFd, message, sizeof(message));
+    
+
+    return 0;
+}
 
 gboolean iter_connections(gpointer key, gpointer value, gpointer data)
 {
@@ -493,6 +506,7 @@ int run_server(int port_num)
         /* TODO: Iterate through all of the clients and check if */
         /* their socket is active */
         g_tree_foreach(connectionList, (GTraverseFunc)iter_connections, &readFdSet);
+        g_tree_foreach(connectionList, (GTraverseFunc)iter_live_connections, &readFdSet);
     }
     /* exit server */
     print_to_output("Server exiting\n", 15);
