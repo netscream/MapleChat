@@ -433,7 +433,6 @@ void readline_callback(char *line)
         prompt = strdup((char*) tmp);
         g_free(tmp);
         rl_set_prompt(prompt);
-        rl_redisplay();
         return;
     }
     else
