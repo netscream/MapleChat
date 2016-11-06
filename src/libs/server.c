@@ -761,9 +761,10 @@ int sockaddr_in_cmp(const void *addr1, const void *addr2)
 
 /* This can be used to build instances of GTree that index on
    the file descriptor of a connection. */
-gint fd_cmp(gconstpointer user1,  gconstpointer user2, gpointer G_GNUC_UNUSED data)
+gint fd_cmp(gconstpointer fd1,  gconstpointer fd2, gpointer G_GNUC_UNUSED data)
 {
-    return GPOINTER_TO_INT(((UserI*) user1)->fd) - GPOINTER_TO_INT(((UserI*) user2)->fd);
+    //return GPOINTER_TO_INT(((UserI*) user1)->fd) - GPOINTER_TO_INT(((UserI*) user2)->fd);
+    return GPOINTER_TO_INT(fd1) - GPOINTER_TO_INT(fd2);
 }
 
 /*gint room_name_cmp(gconstpointer A,  gconstpointer B, gpointer G_GNUC_UNUSED data)
