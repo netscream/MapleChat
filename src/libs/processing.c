@@ -20,6 +20,7 @@ void command_user(gchar** command, struct userInformation* user, gchar* data)
     {
         log_message = g_strconcat(command[1], " authenticated", NULL);
         log_to_console(user->client, log_message);
+        SSL_write(user->sslFd, log_message, strlen(log_message));
         gchar* usern = g_strdup(command[1]);
         user->username = usern;
         if (user->nickname == NULL)
@@ -28,14 +29,13 @@ void command_user(gchar** command, struct userInformation* user, gchar* data)
         }
         user->count_logins = 0;
         g_tree_insert(usersOnServerList, user->username, user);
-        SSL_write(user->sslFd, "Authenticated", 13);
     }
     else
     {
         log_message = g_strconcat(command[1], " authentication error", NULL);
         log_to_console(user->client, log_message);
+        SSL_write(user->sslFd, log_message, strlen(log_message));
         user->count_logins++;
-        SSL_write(user->sslFd, "Auth Error", 13);
     }
     if(log_message != NULL)
     {

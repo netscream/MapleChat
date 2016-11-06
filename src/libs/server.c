@@ -145,7 +145,7 @@ int run_server(int port_num)
         /* TODO: Iterate through all of the clients and check if */
         /* their socket is active */
         unsigned long int to =(valid_timeout.tv_sec - timeout.tv_sec);
-        printf("this is the timeout : %ld\n",(valid_timeout.tv_sec - timeout.tv_sec ));
+        /* printf("this is the timeout : %ld\n",(valid_timeout.tv_sec - timeout.tv_sec )); */
         if(to >= 60){ 
             debug_s("timeout has occurred");
             gettimeofday(&timeout,NULL);

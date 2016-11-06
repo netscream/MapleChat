@@ -54,12 +54,12 @@ int run_client(const char* server_ip, const int port_num)
             break;
         }
         if (r == 0) {
-            
+
             /*
             write(STDOUT_FILENO, "No message?\n", 12);
-            fsync(STDOUT_FILENO); 
+            fsync(STDOUT_FILENO);
             */
-            
+
 
             /* Whenever you print out a message, call this
                to reprint the current input line. */
@@ -125,7 +125,7 @@ int run_client(const char* server_ip, const int port_num)
             }
             rl_forced_update_display();
         }
-        
+
     }
     int sslErr = -1;
     sslErr = SSL_shutdown(server_ssl);
@@ -466,10 +466,13 @@ void readline_callback(char *line)
 
 
         /* Maybe update the prompt. */
-        char reply[14];
-        SSL_read(server_ssl, reply, 14);
-        if (strncmp("Authenticated", reply, 13) == 0)
+        char reply[64];
+        SSL_read(server_ssl, reply, 64);
+        if (g_str_has_suffix(reply, "authenticated"))
         {
+            write(STDOUT_FILENO, "Logged in\n", strlen("Logged in\n"));
+            fsync(STDOUT_FILENO);
+
             free(prompt);
             gchar* tmp = "";
             if (chat_room != NULL)
@@ -482,6 +485,11 @@ void readline_callback(char *line)
             }
             prompt = strdup((char*) tmp);
             g_free(tmp);
+        }
+        else
+        {
+            write(STDOUT_FILENO, "Incorrect Password\n", strlen("Incorrect Password\n"));
+            fsync(STDOUT_FILENO);
         }
         rl_set_prompt(prompt);
         return;
