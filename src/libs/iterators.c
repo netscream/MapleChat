@@ -12,7 +12,10 @@ gboolean iter_connections(gpointer key, gpointer value, gpointer data)
         SSL_read(user->sslFd, message, sizeof(message));
         debug_s("Message:");
         debug_s(message);
-        process_message(message , (struct userInformation*) user);
+        if (message != NULL && strcmp(message, "") != 0)
+        {
+            process_message(message , (struct userInformation*) user);
+        }
     }
     else
     {
