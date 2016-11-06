@@ -21,5 +21,4 @@ void play_game(struct game* new_game, struct userInformation* user1, struct user
 void roll_dice(struct game* new_game);
 void accept_play(struct game* new_game);
 void stop_play(struct game* new_game);
-gchar* return_message(struct game* new_game);
 #endif

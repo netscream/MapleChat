@@ -27,6 +27,7 @@ typedef struct userInformation
     time_t login_timeout;
     struct room_information* current_room;
     struct sockaddr_in* client;
+    struct game* the_game;
 } UserI;
 /* end of structures for the users */
 
