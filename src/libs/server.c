@@ -303,6 +303,10 @@ gboolean iter_live_connections(gpointer key, gpointer value, gpointer data)
     {
         process_message(message , (struct userInformation*) user);
     }
+    if(message == NULL && strcmp("", message) == 0)
+    {
+        //axe the user in question.
+    }
 
 
     return 0;
