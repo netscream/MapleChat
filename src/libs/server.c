@@ -179,7 +179,7 @@ void process_message(char* message, struct userInformation* user)
         printf("joining this room  %s\n",command[1]);
         RoomI *room = NULL;
         debug_s(command[1]);
-        room = g_tree_lookup(roomsOnServerList, command[1]);
+        room = g_tree_lookup(roomsOnServerList, (gchar*) command[1]);
         debug_s("Done looking \n");
         if(room  == NULL)
         {
@@ -192,7 +192,9 @@ void process_message(char* message, struct userInformation* user)
         }
         else
         {
+            printf("g_list length = %d\n", g_list_length(room->user_list));
             room->user_list = g_list_append(room->user_list, user->username);
+            printf("g_list length = %d\n", g_list_length(room->user_list));
         }
         user->current_room = (struct room_information*) room;
         debug_s(user->current_room->room_name);
@@ -232,7 +234,7 @@ void process_message(char* message, struct userInformation* user)
         {
             struct userInformation* tmpUser = NULL;
             debug_s(tmp->data);
-            tmpUser = g_tree_search(usersOnServerList, (GCompareFunc) g_ascii_strcasecmp, (gchar*) tmp->data);
+            tmpUser = g_tree_search(usersOnServerList, (GCompareFunc) gstring_is_equal, wtmp->data);
             if (tmpUser != NULL)
             {
                 SSL_write(tmpUser->sslFd, send_message, strlen(send_message));
@@ -244,6 +246,19 @@ void process_message(char* message, struct userInformation* user)
 
     g_strfreev(msg);
     g_strfreev(command);
+}
+
+gboolean gstring_is_equal(const gpointer a, const gpointer b)
+{
+
+    if (g_strcmp0((gchar*)a, (gchar*)b) == 0)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 gboolean iter_connections(gpointer key, gpointer value, gpointer data)

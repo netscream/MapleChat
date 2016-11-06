@@ -82,6 +82,7 @@ void logger(struct sockaddr_in *client, int type);
 void initialize_user_struct(struct userInformation *new_user);
 gboolean iter_rooms_or_users(gpointer key, gpointer value, gpointer data);
 gboolean iter_users_privmsg(gpointer key, gpointer value, gpointer data);
+gboolean gstring_is_equal(const gpointer a, const gpointer b);
 void process_message(char* message, struct userInformation* user);
 int send_to_user_message(struct userInformation user, char* message);
 #endif
