@@ -39,7 +39,7 @@ gchar* user_get_hash(gchar* username)
     }
 
     gsize length;
-    gchar *passwd = g_base64_decode(passwd64, &length);
+    gchar *passwd = (gchar*) g_base64_decode(passwd64, &length);
     return passwd;
 }
 
@@ -54,7 +54,7 @@ gchar* user_hash_password(gchar* passwd, gchar* salt)
     SHA256_CTX sha256;
     SHA256_Init(&sha256);
     SHA256_Update(&sha256, password, strlen(password));
-    SHA256_Final(hash, &sha256);
+    SHA256_Final((guchar*) hash, &sha256);
 
     g_free(password);
     return hash;
@@ -67,7 +67,7 @@ void user_set_hash(gchar* username, gchar* passwd)
     gchar* hash = user_hash_password(passwd, salt);
 
     debug_s("Setting password hash");
-    gchar *hash64 = g_base64_encode(hash, strlen(hash));
+    gchar *hash64 = (gchar*) g_base64_encode((guchar*) hash, strlen(hash));
     g_key_file_set_string(keyfile, "passwords", username, hash64);
     g_key_file_set_string(keyfile, "salts", username, salt);
     g_key_file_save_to_file(keyfile, "passwords.ini", NULL);
