@@ -130,7 +130,6 @@ void process_message(char* message, struct userInformation* user)
 {
     gchar** msg = g_strsplit(message, ":", 0);
     gchar* data = msg[1];
-    gchar* log_message;
 
     gchar** command = g_strsplit(msg[0], " ", 0);
     if ((g_strcmp0("USER", command[0]) != 0) && user->username == NULL)
@@ -143,6 +142,8 @@ void process_message(char* message, struct userInformation* user)
 
     if(g_strcmp0("USER", command[0]) == 0)
     {
+        gchar* log_message = NULL;;
+
         if (data == NULL)
         {
             SSL_write(user->sslFd, "Empty password obtained\n", 24);
@@ -157,7 +158,7 @@ void process_message(char* message, struct userInformation* user)
         }
         else if(user_authenticate(command[1], data))
         {
-            log_message = g_strconcat(user->nickname, " authenticated", NULL);
+            log_message = g_strconcat(command[1], " authenticated", NULL);
             log_to_console(user->client, log_message);
             gchar* usern = g_strdup(command[1]);
             user->username = usern;
@@ -170,13 +171,14 @@ void process_message(char* message, struct userInformation* user)
         }
         else
         {
-            debug_s("Wrong password");
-            log_message = g_strconcat(user->username, " authentication error", NULL);
-            printf("Logging: %s\n", log_message);
+            log_message = g_strconcat(command[1], " authentication error", NULL);
             log_to_console(user->client, log_message);
             user->count_logins++;
         }
-        g_free(log_message);
+        if(log_message != NULL)
+        {
+            g_free(log_message);
+        }
     }
     else if(g_strcmp0("LIST", command[0]) == 0)
     {
