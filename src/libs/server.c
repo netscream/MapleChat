@@ -120,6 +120,12 @@ int user_authenticate(gchar* username, gchar* passwd)
     return 0;
 }
 
+void disconnect_user(struct userInformation* user)
+{
+    debug_s("Disconnecting user");
+    g_tree_steal(connectionList, &user->fd);
+}
+
 void process_message(char* message, struct userInformation* user)
 {
     gchar** msg = g_strsplit(message, ":", 0);
@@ -136,26 +142,42 @@ void process_message(char* message, struct userInformation* user)
 
     if(g_strcmp0("USER", command[0]) == 0)
     {
+        gchar* log_message = NULL;;
+
         if (data == NULL)
         {
             SSL_write(user->sslFd, "Empty password obtained\n", 24);
         }
-        else
-        if(user_authenticate(command[1], data))
+        else if(user->count_logins >= 2)
         {
-            printf("User logged in as %s\n", command[1]);
+            /* Disconnect user for trying too many times */
+            SSL_write(user->sslFd,
+                    "Too many wrong tries. Closing connection\n",
+                    strlen("Too many wrong tries. Closing connection\n"));
+            disconnect_user(user);
+        }
+        else if(user_authenticate(command[1], data))
+        {
+            log_message = g_strconcat(command[1], " authenticated", NULL);
+            log_to_console(user->client, log_message);
             gchar* usern = g_strdup(command[1]);
             user->username = usern;
             if (user->nickname == NULL)
             {
                 user->nickname = usern;
             }
-            user->count_logins++;
+            user->count_logins = 0;
             g_tree_insert(usersOnServerList, user->username, user);
         }
         else
         {
-            printf("Incorrect password for %s\n", command[1]);
+            log_message = g_strconcat(command[1], " authentication error", NULL);
+            log_to_console(user->client, log_message);
+            user->count_logins++;
+        }
+        if(log_message != NULL)
+        {
+            g_free(log_message);
         }
     }
     else if(g_strcmp0("LIST", command[0]) == 0)
@@ -375,29 +397,29 @@ gboolean iter_users(gpointer key, gpointer value, gpointer data)
             if (tmp_user->current_room != NULL)
             {
                 debug_s("user is in chatroom");
-                tmp = g_strjoin("", 
-                                *((gchar**) data), 
+                tmp = g_strjoin("",
+                                *((gchar**) data),
                                 "\t",
                                 "(",
-                                inet_ntop(AF_INET, &(client_addr)->sin_addr, cl_bugg, len), 
-                                ":", 
+                                inet_ntop(AF_INET, &(client_addr)->sin_addr, cl_bugg, len),
+                                ":",
                                 port_id,
-                                ")", 
-                                "\t" , 
+                                ")",
+                                "\t" ,
                                 tmp_user->current_room->room_name,
-                                "\n", 
+                                "\n",
                                 NULL);
             }
             else
             {
-                tmp = g_strjoin("", 
-                                *((gchar**) data), 
+                tmp = g_strjoin("",
+                                *((gchar**) data),
                                 "\t",
                                 "(",
-                                inet_ntop(AF_INET, &(client_addr)->sin_addr, cl_bugg, len), 
-                                ":", 
+                                inet_ntop(AF_INET, &(client_addr)->sin_addr, cl_bugg, len),
+                                ":",
                                 port_id,
-                                ")", 
+                                ")",
                                 "\t",
                                 "\n",
                                 NULL);
@@ -424,31 +446,31 @@ gboolean iter_users(gpointer key, gpointer value, gpointer data)
             if (tmp_user->current_room != NULL)
             {
                 debug_s("user is in chatroom");
-                tmp = g_strjoin("", 
+                tmp = g_strjoin("",
                                 *((gchar**) data),
                                 this_username,
                                 "\t",
                                 "(",
-                                inet_ntop(AF_INET, &(client_addr)->sin_addr, cl_bugg, len), 
-                                ":", 
+                                inet_ntop(AF_INET, &(client_addr)->sin_addr, cl_bugg, len),
+                                ":",
                                 port_id,
-                                ")", 
-                                "\t" , 
+                                ")",
+                                "\t" ,
                                 tmp_user->current_room->room_name,
-                                "\n", 
+                                "\n",
                                 NULL);
             }
             else
             {
-                tmp = g_strjoin("", 
+                tmp = g_strjoin("",
                                 *((gchar**) data),
                                 this_username,
                                 "\t",
                                 "(",
-                                inet_ntop(AF_INET, &(client_addr)->sin_addr, cl_bugg, len), 
-                                ":", 
+                                inet_ntop(AF_INET, &(client_addr)->sin_addr, cl_bugg, len),
+                                ":",
                                 port_id,
-                                ")", 
+                                ")",
                                 "\t",
                                 "\n",
                                 NULL);
