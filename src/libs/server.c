@@ -460,7 +460,7 @@ int run_server(int port_num)
                 debug_d("SSL ACCEPT = ", sslErr);
                 if (sslErr > 0)
                 {
-                    debug_s("STUFF");
+                    debug_s("Creating new connection");
                     UserI *new_user = g_new0(UserI, 1); //create new User struct
                     initialize_user_struct(new_user);
                     new_user->sslFd = sslclient;
