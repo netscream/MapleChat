@@ -129,6 +129,11 @@ void process_message(char* message, struct userInformation* user)
 
     if(g_strcmp0("USER", command[0]) == 0)
     {
+        if (data == NULL)
+        {
+            SSL_write(user->sslFd, "Empty password obtained\n", 24);
+        }
+        else
         if(user_authenticate(command[1], data))
         {
             printf("User logged in as %s\n", command[1]);
@@ -164,7 +169,7 @@ void process_message(char* message, struct userInformation* user)
             printf("g_list length = %d\n", g_list_length(tmp_room->user_list));
             tmp_room->user_list = g_list_remove(tmp_room->user_list, user);
             printf("g_list length = %d\n", g_list_length(tmp_room->user_list));
-            if (g_list_length(tmp_room->user_list) == 1)
+            if (g_list_length(tmp_room->user_list) == 0)
             {
                 g_list_free(tmp_room->user_list);
                 gchar* tmp = g_strdup(tmp_room->room_name);
