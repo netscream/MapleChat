@@ -126,7 +126,14 @@ void process_message(char* message, struct userInformation* user)
     gchar* data = msg[1];
 
     gchar** command = g_strsplit(msg[0], " ", 0);
-
+    if ((g_strcmp0("USER", command[0]) != 0) && user->username == NULL)
+    {
+        SSL_write(user->sslFd, 
+                "User needs to be authenticated to user server\n",
+                strlen("User needs to be authenticated to user server\n"));
+        return;
+    }
+    
     if(g_strcmp0("USER", command[0]) == 0)
     {
         if (data == NULL)
@@ -265,7 +272,7 @@ void process_message(char* message, struct userInformation* user)
     g_strfreev(command);
 }
 
-gboolean gstring_is_equal(const gpointer a, const gpointer b)
+/*gboolean gstring_is_equal(const gpointer a, const gpointer b)
 {
 
     if (g_strcmp0((gchar*)a, (gchar*)b) == 0)
@@ -276,7 +283,7 @@ gboolean gstring_is_equal(const gpointer a, const gpointer b)
     {
         return 0;
     }
-}
+}*/
 
 gboolean iter_connections(gpointer key, gpointer value, gpointer data)
 {
