@@ -106,7 +106,20 @@ int run_client(const char* server_ip, const int port_num)
             char message[512];
             memset(&message, 0, sizeof(message));
             SSL_read(server_ssl, message, sizeof(message));
-            printf("%s", message);
+            if (strncmp("PING", message, 4) == 0)
+            {
+                /* Send a PONG back to the server */
+                if (SSL_write(server_ssl, "PONG", strlen("PONG")) == -1)
+                {
+                    debug_s("SSL_WRITE error:");
+                    ERR_print_errors_fp(stderr);
+                }
+            }
+            else
+            {
+                /* Just print out the message */
+                printf("%s", message);
+            }
         }
     }
     int sslErr = -1;

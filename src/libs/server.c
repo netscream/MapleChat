@@ -122,8 +122,10 @@ int user_authenticate(gchar* username, gchar* passwd)
 
 void process_message(char* message, struct userInformation* user)
 {
+
     gchar** msg = g_strsplit(message, ":", 0);
     gchar* data = msg[1];
+    gchar* log_message;
 
     gchar** command = g_strsplit(msg[0], " ", 0);
     if ((g_strcmp0("USER", command[0]) != 0) && user->username == NULL)
@@ -140,10 +142,10 @@ void process_message(char* message, struct userInformation* user)
         {
             SSL_write(user->sslFd, "Empty password obtained\n", 24);
         }
-        else
-        if(user_authenticate(command[1], data))
+        else if(user_authenticate(command[1], data))
         {
-            printf("User logged in as %s\n", command[1]);
+            log_message = g_strconcat(command[1], "authenticated", NULL);
+            /* log_to_console(user->sock, log_message); */
             gchar* usern = g_strdup(command[1]);
             user->username = usern;
             if (user->nickname == NULL)
@@ -155,8 +157,11 @@ void process_message(char* message, struct userInformation* user)
         }
         else
         {
+            log_message = g_strconcat(command[1], "authentication error", NULL);
+            /* log_to_console(user->sock, log_message); */
             printf("Incorrect password for %s\n", command[1]);
         }
+        g_free(log_message);
     }
     else if(g_strcmp0("LIST", command[0]) == 0)
     {
@@ -295,7 +300,10 @@ gboolean iter_connections(gpointer key, gpointer value, gpointer data)
         memset(message, 0, sizeof(message));
         SSL_read(user->sslFd, message, sizeof(message));
         printf("Message: %s\n", message);
-        process_message(message , (struct userInformation*) user);
+        if(message != NULL && strcmp("", message) != 0)
+        {
+            process_message(message , (struct userInformation*) user);
+        }
     }
     else
     {
