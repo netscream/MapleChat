@@ -1,6 +1,7 @@
 #ifndef AUTHENTICATION_H
 #define AUTHENTICATION_H
 #include "server.h"
+
 gchar* generate_salt();
 gchar* user_get_salt(gchar* username);
 gchar* user_get_hash(gchar* username);

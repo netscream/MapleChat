@@ -41,7 +41,7 @@ void command_user(gchar** command, struct userInformation* user, gchar* data)
     }
 }
 
-void command_list(gchar** command, struct userInformation* user)
+void command_list(struct userInformation* user)
 {
     debug_s("User requested list of chat rooms\n");
     gchar* list_of_chans = g_strdup("");
@@ -67,7 +67,7 @@ void command_join(gchar** command, struct userInformation* user)
         if (g_list_length(tmp_room->user_list) == 0)
         {
             g_list_free(tmp_room->user_list);
-            gchar* tmp = g_strdup(tmp_room->room_name);
+            //gchar* tmp = g_strdup(tmp_room->room_name);
             g_tree_remove(roomsOnServerList, tmp_room->room_name);
             g_free(tmp_room->room_name);
             g_free(tmp_room);
@@ -100,7 +100,7 @@ void command_join(gchar** command, struct userInformation* user)
     printf("joined this room, %s\n",command[1]);
 }
 
-void command_who(gchar** command, struct userInformation* user)
+void command_who(struct userInformation* user)
 {
     debug_s("User requested list of users\n");
     gchar* list_of_users = g_strdup("");
@@ -125,7 +125,7 @@ void command_private_message(gchar** command, struct userInformation* user, gcha
     g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_users_privmsg, (gpointer) &tmp);
 }
 
-void channel_send_message(gchar** command, struct userInformation* user, gchar* data)
+void channel_send_message(struct userInformation* user, gchar* data)
 {
     debug_s("User sending message to channel\n");
     struct room_information* user_room = user->current_room;
@@ -173,7 +173,7 @@ void process_message(char* message, struct userInformation* user)
     }
     else if(g_strcmp0("LIST", command[0]) == 0)
     {
-        command_list(command, user);
+        command_list(user);
     }
     else if(g_strcmp0("PRIVMSG", command[0]) == 0)
     {
@@ -185,11 +185,11 @@ void process_message(char* message, struct userInformation* user)
     }
     else if(g_strcmp0("WHO", command[0]) == 0)
     {
-        command_who(command, user);
+        command_who(user);
     }
     else /* lets assume everything else is a message to channel */
     {
-        channel_send_message(command, user, data);
+        channel_send_message(user, data);
     }
 
     g_strfreev(msg);

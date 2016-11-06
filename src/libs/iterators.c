@@ -4,7 +4,7 @@ gboolean iter_connections(gpointer key, gpointer value, gpointer data)
 {
     UserI* user = (UserI* ) value;
 
-    if (FD_ISSET(user->fd, (fd_set *)data))
+    if (FD_ISSET(*((int*) key), (fd_set *)data))
     {
         debug_d("Socket active No #", user->fd);
         char message[512];
@@ -26,7 +26,7 @@ gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data)
     UserI* user = (UserI* ) value;
     iterArgs* args = (iterArgs *) data;
 
-    FD_SET(user->fd, args->readFdSet);
+    FD_SET(*((int*) key), args->readFdSet);
 
     if(user->fd > *(args->max_fd))
         *(args->max_fd) = user->fd;
@@ -105,8 +105,8 @@ gboolean iter_users(gpointer key, gpointer value, gpointer data)
             *((gchar**) data) = (gpointer) tmp;
         }
         return 0;
-
     }
+    return 0;
 }
 
 gboolean iter_rooms(gpointer key, gpointer value, gpointer data)

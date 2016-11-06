@@ -1,7 +1,5 @@
 #include "server.h"
 
-
-
 /*
  * Function runServer
  * The main server function
@@ -27,7 +25,7 @@ int run_server(int port_num)
 
     /* Lets initalize the server attributes  */
     server = server_struct_init(port_num);
-    sockFd = initalize_server(port_num, server);
+    sockFd = initalize_server(server);
     debug_sockaddr("Server ip = ", server);
     /* Run the server FOREVER */
 
@@ -178,7 +176,7 @@ struct sockaddr_in server_struct_init(int port_num)
  * Listens to sockets
  * returns sockfd
  */
-int initalize_server(const int port_num, struct sockaddr_in server)
+int initalize_server(struct sockaddr_in server)
 {
     debug_s("Initializing the server!");
     int sockFd;
@@ -337,9 +335,4 @@ void initialize_user_struct(struct userInformation *new_user)
     new_user->nickname = NULL;
     new_user->count_logins = 0;
     new_user->login_timeout = 0;
-}
-
-int send_to_user_message(struct userInformation user, char* message)
-{
-    return 0;
 }
