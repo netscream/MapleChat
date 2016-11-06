@@ -41,7 +41,7 @@ int run_client(const char* server_ip, const int port_num)
         timeout.tv_sec = 2;
         timeout.tv_usec = 0;
 
-        int r = select(exitfd[0] + 3, &rfds, NULL, NULL, &timeout);
+        int r = select(server_fd + 3, &rfds, NULL, NULL, &timeout);
         if (r < 0) {
             if (errno == EINTR) {
                 /* This should either retry the call or
@@ -154,6 +154,10 @@ void connect_to_server(const char* server, const int port_num)
     debug_s("Inside connect_to_server\n");
     int sslErr = -1;
     memset(&serverAddr, '\0', sizeof(serverAddr));
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(port_num);
+    inet_pton(AF_INET, server, &serverAddr.sin_addr);
+
 
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd == -1)
@@ -161,10 +165,6 @@ void connect_to_server(const char* server, const int port_num)
         perror("Socket error: ");
         exit(EXIT_FAILURE);
     }
-
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(port_num);
-    inet_pton(AF_INET, server, &serverAddr.sin_addr);
 
     connect(server_fd, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
 
@@ -183,6 +183,39 @@ void connect_to_server(const char* server, const int port_num)
         print_SSL_error(SSL_get_error(server_ssl, sslErr));
     }
 
+}
+
+void reconnect()
+{
+    int sslErr = -1;
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd == -1)
+    {
+        perror("Socket error: ");
+        exit(EXIT_FAILURE);
+    }
+
+    connect(server_fd, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+
+    /* Use the socket for the SSL connection. */
+    if (SSL_set_fd(server_ssl, server_fd) <= 0)
+    {
+        debug_s("SSL set fd error:");
+        ERR_print_errors_fp(stderr);
+        exit(1);
+    }
+
+    sslErr = SSL_connect(server_ssl);
+    if (sslErr <= 0 || sslErr == 2)
+    {
+        debug_s("SSL connect error:");
+        print_SSL_error(SSL_get_error(server_ssl, sslErr));
+    }
+    user_name = NULL;
+    chat_room = NULL;
+    free(prompt);
+    prompt = strdup("> ");
+    rl_set_prompt(prompt);
 }
 
 /* If someone kills the client, it should still clean up the readline
@@ -274,6 +307,11 @@ void readline_callback(char *line)
         return;
     }
     else
+    if (strncmp("/reconnect", line, 10) == 0) {
+        reconnect();
+        return;
+    }
+    else
     if (strncmp("/game", line, 5) == 0) {
         /* Skip whitespace */
         int i = 4;
@@ -317,18 +355,26 @@ void readline_callback(char *line)
         g_free(request);
 
         /* Maybe update the prompt. */
-        gchar* tmp = "";
-        if (user_name != NULL)
+        char reply[50];
+        if (SSL_read(server_ssl, reply, sizeof(reply)) < 2)
         {
-            tmp = g_strconcat("(", user_name, ") ", chat_room, "> ", NULL);
+            gchar* tmp = "";
+            if (user_name != NULL)
+            {
+                tmp = g_strconcat("(", user_name, ") ", chat_room, "> ", NULL);
+            }
+            else
+            {
+                tmp = g_strconcat(chat_room, "> ", NULL);
+            }
+            free(prompt);
+            prompt = strdup((char*) tmp);
+            g_free(tmp);
         }
         else
         {
-            tmp = g_strconcat(chat_room, "> ", NULL);
+            printf("%s", reply);
         }
-        free(prompt);
-        prompt = strdup((char*) tmp);
-        g_free(tmp);
         rl_set_prompt(prompt);
         return;
     }
@@ -420,18 +466,23 @@ void readline_callback(char *line)
 
 
         /* Maybe update the prompt. */
-        free(prompt);
-        gchar* tmp = "";
-        if (chat_room != NULL)
+        char reply[14];
+        SSL_read(server_ssl, reply, 14);
+        if (strncmp("Authenticated", reply, 13) == 0)
         {
-            tmp = g_strconcat("(", user_name, ") ", chat_room, "> ", NULL);
+            free(prompt);
+            gchar* tmp = "";
+            if (chat_room != NULL)
+            {
+                tmp = g_strconcat("(", user_name, ") ", chat_room, "> ", NULL);
+            }
+            else
+            {
+                tmp = g_strconcat("(", user_name, ") ", "> ", NULL);
+            }
+            prompt = strdup((char*) tmp);
+            g_free(tmp);
         }
-        else
-        {
-            tmp = g_strconcat("(", user_name, ") ", "> ", NULL);
-        }
-        prompt = strdup((char*) tmp);
-        g_free(tmp);
         rl_set_prompt(prompt);
         return;
     }

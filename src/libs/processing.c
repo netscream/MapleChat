@@ -28,12 +28,14 @@ void command_user(gchar** command, struct userInformation* user, gchar* data)
         }
         user->count_logins = 0;
         g_tree_insert(usersOnServerList, user->username, user);
+        SSL_write(user->sslFd, "Authenticated", 13);
     }
     else
     {
         log_message = g_strconcat(command[1], " authentication error", NULL);
         log_to_console(user->client, log_message);
         user->count_logins++;
+        SSL_write(user->sslFd, "Auth Error", 13);
     }
     if(log_message != NULL)
     {
@@ -98,6 +100,7 @@ void command_join(gchar** command, struct userInformation* user)
     debug_s(user->current_room->room_name);
     debug_s(room->room_name);
     printf("joined this room, %s\n",command[1]);
+    SSL_write(user->sslFd, " ", 1);
 }
 
 void command_who(struct userInformation* user)

@@ -63,4 +63,5 @@ void signal_handler(int signum);
 void initialize_exitfd(void);
 void readline_callback(char *line);
 void initialize_openSSL_cert();
+void reconnect();
 #endif
