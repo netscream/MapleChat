@@ -207,9 +207,7 @@ void process_message(char* message, struct userInformation* user)
         }
         else
         {
-            //printf("g_list length = %d\n", g_list_length(room->user_list));
             room->user_list = g_list_append(room->user_list, user);
-            //printf("g_list length = %d\n", g_list_length(room->user_list));
         }
         user->current_room = (struct room_information*) room;
         debug_s(user->current_room->room_name);
@@ -291,16 +289,20 @@ gboolean iter_connections(gpointer key, gpointer value, gpointer data)
 
     if (FD_ISSET(user->fd, (fd_set *)data))
     {
-        printf("Socket %d is active\n", user->fd);
+        //printf("Socket %d is active\n", user->fd);
+        debug_d("Socket active No #", user->fd);
         char message[512];
         memset(message, 0, sizeof(message));
         SSL_read(user->sslFd, message, sizeof(message));
-        printf("Message: %s\n", message);
+        //printf("Message: %s\n", message);
+        debug_s("Message:");
+        debug_s(message);
         process_message(message , (struct userInformation*) user);
     }
     else
     {
-        printf("Socket %d is inactive\n", user->fd);
+        //printf("Socket %d is inactive\n", user->fd);
+        debug_d("Socket inactive No #", user->fd);
     }
 
     /* TODO: We may want to make this stop once we find an active connection */
