@@ -122,10 +122,8 @@ int user_authenticate(gchar* username, gchar* passwd)
 
 void process_message(char* message, struct userInformation* user)
 {
-
     gchar** msg = g_strsplit(message, ":", 0);
     gchar* data = msg[1];
-    gchar* log_message;
 
     gchar** command = g_strsplit(msg[0], " ", 0);
     if ((g_strcmp0("USER", command[0]) != 0) && user->username == NULL)
@@ -142,10 +140,10 @@ void process_message(char* message, struct userInformation* user)
         {
             SSL_write(user->sslFd, "Empty password obtained\n", 24);
         }
-        else if(user_authenticate(command[1], data))
+        else
+        if(user_authenticate(command[1], data))
         {
-            log_message = g_strconcat(command[1], "authenticated", NULL);
-            /* log_to_console(user->sock, log_message); */
+            printf("User logged in as %s\n", command[1]);
             gchar* usern = g_strdup(command[1]);
             user->username = usern;
             if (user->nickname == NULL)
@@ -157,17 +155,14 @@ void process_message(char* message, struct userInformation* user)
         }
         else
         {
-            log_message = g_strconcat(command[1], "authentication error", NULL);
-            /* log_to_console(user->sock, log_message); */
             printf("Incorrect password for %s\n", command[1]);
         }
-        g_free(log_message);
     }
     else if(g_strcmp0("LIST", command[0]) == 0)
     {
         debug_s("User requested list of chat rooms\n");
         gchar* list_of_chans = g_strdup("");
-        g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms_or_users, (gpointer) &list_of_chans);
+        g_tree_foreach(roomsOnServerList, (GTraverseFunc) iter_rooms, (gpointer) &list_of_chans);
         if (g_strcmp0("", list_of_chans) != 0)
         {
             debug_s(list_of_chans);
@@ -226,11 +221,12 @@ void process_message(char* message, struct userInformation* user)
     {
         debug_s("User requested list of users\n");
         gchar* list_of_users = g_strdup("");
-        g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_rooms_or_users, (gpointer) &list_of_users);
+        //g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_users, (gpointer) &list_of_users);
+        g_tree_foreach(connectionList, (GTraverseFunc) iter_users, (gpointer) &list_of_users);
         if (g_strcmp0("", list_of_users) != 0)
         {
             debug_s(list_of_users);
-            gchar* tmp = g_strconcat("Users on server: ", list_of_users, "\n", NULL);
+            gchar* tmp = g_strconcat("Users on server: \n", list_of_users, "\n", NULL);
             g_free(list_of_users);
             SSL_write(user->sslFd, tmp, strlen(tmp));
         }
@@ -300,10 +296,7 @@ gboolean iter_connections(gpointer key, gpointer value, gpointer data)
         memset(message, 0, sizeof(message));
         SSL_read(user->sslFd, message, sizeof(message));
         printf("Message: %s\n", message);
-        if(message != NULL && strcmp("", message) != 0)
-        {
-            process_message(message , (struct userInformation*) user);
-        }
+        process_message(message , (struct userInformation*) user);
     }
     else
     {
@@ -328,7 +321,135 @@ gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data)
     return 0;
 }
 
-gboolean iter_rooms_or_users(gpointer key, gpointer value, gpointer data)
+gboolean iter_users(gpointer key, gpointer value, gpointer data)
+{
+    if (key != NULL && value != NULL)
+    {
+        if (g_strcmp0("", *((gchar**) data)) == 0)
+        {
+            struct userInformation* tmp_user = (struct userInformation*) value;
+            if (tmp_user->username != NULL)
+            {
+                g_free(*((gchar**) data));
+                *((gchar**) data) = (gpointer) g_strdup(tmp_user->username);
+            }
+            struct sockaddr_in* client_addr = tmp_user->client;
+            char port_id[2];
+            int len = 14;
+            memset(&port_id, 0, 2);
+            char cl_bugg[len];
+            memset(&cl_bugg, 0, len);
+            sprintf(port_id,"%d", ntohs(client_addr->sin_port));
+            gchar* tmp = NULL;
+            if (tmp_user->current_room != NULL)
+            {
+                debug_s("user is in chatroom");
+                tmp = g_strjoin("", 
+                                *((gchar**) data), 
+                                "\t",
+                                "(",
+                                inet_ntop(AF_INET, &(client_addr)->sin_addr, cl_bugg, len), 
+                                ":", 
+                                port_id,
+                                ")", 
+                                "\t" , 
+                                tmp_user->current_room->room_name,
+                                "\n", 
+                                NULL);
+            }
+            else
+            {
+                tmp = g_strjoin("", 
+                                *((gchar**) data), 
+                                "\t",
+                                "(",
+                                inet_ntop(AF_INET, &(client_addr)->sin_addr, cl_bugg, len), 
+                                ":", 
+                                port_id,
+                                ")", 
+                                "\t",
+                                "\n",
+                                NULL);
+            }
+            g_free(*((gchar**) data));
+            *((gchar**) data) = (gpointer) tmp;
+        }
+        else
+        {
+            gchar* this_username = "\t";
+            struct userInformation* tmp_user = (struct userInformation*) value;
+            if (tmp_user->username != NULL)
+            {
+                this_username = tmp_user->username;
+            }
+            struct sockaddr_in* client_addr = tmp_user->client;
+            char port_id[2];
+            int len = 14;
+            memset(&port_id, 0, 2);
+            char cl_bugg[len];
+            memset(&cl_bugg, 0, len);
+            sprintf(port_id,"%d", ntohs(client_addr->sin_port));
+            gchar* tmp = NULL;
+            if (tmp_user->current_room != NULL)
+            {
+                debug_s("user is in chatroom");
+                tmp = g_strjoin("", 
+                                *((gchar**) data),
+                                this_username,
+                                "\t",
+                                "(",
+                                inet_ntop(AF_INET, &(client_addr)->sin_addr, cl_bugg, len), 
+                                ":", 
+                                port_id,
+                                ")", 
+                                "\t" , 
+                                tmp_user->current_room->room_name,
+                                "\n", 
+                                NULL);
+            }
+            else
+            {
+                tmp = g_strjoin("", 
+                                *((gchar**) data),
+                                this_username,
+                                "\t",
+                                "(",
+                                inet_ntop(AF_INET, &(client_addr)->sin_addr, cl_bugg, len), 
+                                ":", 
+                                port_id,
+                                ")", 
+                                "\t",
+                                "\n",
+                                NULL);
+            }
+            g_free(*((gchar**) data));
+            *((gchar**) data) = (gpointer) tmp;
+        }
+        return 0;
+
+    }
+}
+/*gboolean iter_users(gpointer key, gpointer value, gpointer data)
+{
+    if (key != NULL && value != NULL)
+    {
+        if (g_strcmp0("", *((gchar**) data)) == 0)
+        {
+            struct sockaddr_in* tmp_client = ((struct userInformation*) value)->client;
+            g_free(*((gchar**) data));
+            *((gchar**) data) = (gpointer) g_strdup((gchar*) key);
+        }
+        else
+        {
+            gchar* tmp = g_strjoin(",", *((gchar**) data), (gchar*) key, NULL);
+            g_free(*((gchar**) data));
+            *((gchar**) data) = (gpointer) tmp;
+        }
+    }
+    return 0;
+}*/
+
+gboolean iter_rooms(gpointer key, gpointer value, gpointer data)
 {
     if (key != NULL && value != NULL)
     {
@@ -694,7 +815,6 @@ void initialize_user_struct(struct userInformation *new_user)
     new_user->fd = -1;
     new_user->username = NULL;
     new_user->nickname = NULL;
-    new_user->roomname = NULL;
     new_user->count_logins = 0;
     new_user->login_timeout = 0;
 }
