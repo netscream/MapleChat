@@ -139,6 +139,10 @@ void process_message(char* message, struct userInformation* user)
             printf("User logged in as %s\n", command[1]);
             gchar* usern = g_strdup(command[1]);
             user->username = usern;
+            if (user->nickname == NULL)
+            {
+                user->nickname = usern;
+            }
             user->count_logins++;
             g_tree_insert(usersOnServerList, user->username, user);
         }
@@ -197,9 +201,9 @@ void process_message(char* message, struct userInformation* user)
         }
         else
         {
-            printf("g_list length = %d\n", g_list_length(room->user_list));
+            //printf("g_list length = %d\n", g_list_length(room->user_list));
             room->user_list = g_list_append(room->user_list, user);
-            printf("g_list length = %d\n", g_list_length(room->user_list));
+            //printf("g_list length = %d\n", g_list_length(room->user_list));
         }
         user->current_room = (struct room_information*) room;
         debug_s(user->current_room->room_name);
@@ -236,22 +240,24 @@ void process_message(char* message, struct userInformation* user)
         if (user_room != NULL)
         {
             debug_s("User room is not NULL");
-            gchar* send_message = g_strconcat(user_room->room_name, " ", "<", user->username ,">:", data, NULL);
+            gchar* send_message = g_strconcat(user_room->room_name, " ", "<", user->nickname ,">:", data, NULL);
             GList *tmp = user_room->user_list;
             while (tmp != NULL)
             {
                 struct userInformation* tmpUser = NULL;
                 tmpUser = tmp->data;
-                //debug_s(tmp->data);
-                //tmpUser = g_tree_search(usersOnServerList, (GCompareFunc) gstring_is_equal, wtmp->data);
                 if (tmpUser != NULL)
                 {
-                    debug_s(tmpUser->username);
+                    debug_s(tmpUser->nickname);
                     SSL_write(tmpUser->sslFd, send_message, strlen(send_message));
                 }
                 tmp = g_list_next(tmp);
             }
             g_free(send_message);
+        }
+        else
+        {
+            SSL_write(user->sslFd, "User not in channel\n", 20);
         }
     }
 

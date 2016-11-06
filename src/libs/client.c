@@ -56,8 +56,8 @@ int run_client(const char* server_ip, const int port_num)
             break;
         }
         if (r == 0) {
-            write(STDOUT_FILENO, "No message?\n", 12);
-            fsync(STDOUT_FILENO);
+            /*write(STDOUT_FILENO, "No message?\n", 12);
+            fsync(STDOUT_FILENO); /*
             /* Whenever you print out a message, call this
                to reprint the current input line. */
             rl_redisplay();
