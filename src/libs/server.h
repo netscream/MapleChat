@@ -40,7 +40,6 @@ struct userInformation
     int fd;
     char *username;
     char *nickname;
-    char *roomname;
     int count_logins;
     time_t login_timeout;
     struct room_information* current_room;
@@ -81,7 +80,8 @@ gint fd_cmp(gconstpointer fd1,  gconstpointer fd2, gpointer G_GNUC_UNUSED data);
 //gint room_name_cmp(gconstpointer A,  gconstpointer B, gpointer G_GNUC_UNUSED data);
 void logger(struct sockaddr_in *client, int type);
 void initialize_user_struct(struct userInformation *new_user);
-gboolean iter_rooms_or_users(gpointer key, gpointer value, gpointer data);
+gboolean iter_users(gpointer key, gpointer value, gpointer data);
+gboolean iter_rooms(gpointer key, gpointer value, gpointer data);
 gboolean iter_users_privmsg(gpointer key, gpointer value, gpointer data);
 //gboolean gstring_is_equal(const gpointer a, const gpointer b);
 void process_message(char* message, struct userInformation* user);
