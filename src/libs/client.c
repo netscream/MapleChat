@@ -199,7 +199,7 @@ void signal_handler(int signum)
     errno = _errno;
 }
 
-static void initialize_exitfd(void)
+void initialize_exitfd(void)
 {
     /* Establish the self pipe for signal handling. */
     if (pipe(exitfd) == -1) {
@@ -320,11 +320,11 @@ void readline_callback(char *line)
         gchar* tmp = "";
         if (user_name != NULL)
         {
-            tmp = g_strconcat("(", user_name, ") ", chat_room, " >", NULL);
+            tmp = g_strconcat("(", user_name, ") ", chat_room, " > ", NULL);
         }
         else
         {
-            tmp = g_strconcat(chat_room, ">", NULL);
+            tmp = g_strconcat(chat_room, "> ", NULL);
         }
         free(prompt);
         prompt = strdup((char*) tmp);
