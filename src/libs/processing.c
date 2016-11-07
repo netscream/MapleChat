@@ -20,7 +20,6 @@ void command_user(gchar** command, struct userInformation* user, gchar* data)
     {
         log_message = g_strconcat(command[1], " authenticated", NULL);
         log_to_console(user->client, log_message);
-        SSL_write(user->sslFd, log_message, strlen(log_message));
         gchar* usern = g_strdup(command[1]);
         user->username = usern;
         if (user->nickname == NULL)
@@ -29,13 +28,14 @@ void command_user(gchar** command, struct userInformation* user, gchar* data)
         }
         user->count_logins = 0;
         g_tree_insert(usersOnServerList, user->username, user);
+        SSL_write(user->sslFd, "Authenticated", 13);
     }
     else
     {
         log_message = g_strconcat(command[1], " authentication error", NULL);
         log_to_console(user->client, log_message);
-        SSL_write(user->sslFd, log_message, strlen(log_message));
         user->count_logins++;
+        SSL_write(user->sslFd, "Auth Error", 13);
     }
     if(log_message != NULL)
     {
@@ -156,6 +156,63 @@ void channel_send_message(struct userInformation* user, gchar* data)
     }
 }
 
+void command_play(struct userInformation* user, gchar* data)
+{
+    struct find_user tmp;
+    tmp.user1 = user;
+    tmp.user2 = NULL;
+    tmp.stringuser2 = data;
+
+    g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_users_find, (gpointer) &tmp);
+    if (tmp.user2 != NULL)
+    {
+        debug_s("User 2 is not null");
+        struct userInformation* user2 = (struct userInformation*) tmp.user2;
+        if (g_strcmp0(user->nickname, user2->nickname) == 0)
+        {
+            SSL_write(user->sslFd, "Cannot play with yourself!", 26);
+        }
+        else
+        {
+            struct game *new_game = NULL;
+            play_game(new_game, user, user2);
+        }
+    }
+    else
+    {
+        SSL_write(user->sslFd, "No such user found!", 19);
+    }
+}
+
+void command_accept(struct userInformation* user)
+{
+    if (user->the_game == NULL)
+    {
+        SSL_write(user->sslFd, "No game running\n", 17);
+    }
+    else
+    {
+        accept_play(user->the_game);
+    }
+}
+
+void command_reject(struct userInformation* user)
+{
+    if (user->the_game == NULL)
+    {
+        SSL_write(user->sslFd, "No game running\n", 17);
+    }
+    else
+    {
+        reject_play(user->the_game);
+    }
+}
+
+void command_roll(struct userInformation* user)
+{
+    roll_dice(user->the_game);
+}
+
 void process_message(char* message, struct userInformation* user)
 {
     gchar** msg = g_strsplit(message, ":", 0);
@@ -173,7 +230,7 @@ void process_message(char* message, struct userInformation* user)
         debug_s("Recieved PONG");
         struct timeval now;
         gettimeofday(&now, NULL);
-        user->login_timeout.tv_sec = now.tv_sec + (TIMEOUT_INTERVAL * 2) + 1;
+        user->login_timeout.tv_sec = now.tv_sec + (TIMEOUT_INTERVAL * 3);
     }
     else if ((g_strcmp0("USER", command[0]) != 0) && user->username == NULL)
     {
@@ -202,6 +259,22 @@ void process_message(char* message, struct userInformation* user)
     else if(g_strcmp0("WHO", command[0]) == 0)
     {
         command_who(user);
+    }
+    else if(g_strcmp0("PLAY", command[0]) == 0)
+    {
+        command_play(user, command[2]);
+    }
+    else if(g_strcmp0("ACCEPT", command[0]) == 0)
+    {
+        command_accept(user);
+    }
+    else if(g_strcmp0("REJECT", command[0]) == 0)
+    {
+        command_reject(user);
+    }
+    else if(g_strcmp0("ROLL", command[0]) == 0)
+    {
+        command_roll(user);
     }
     else /* lets assume everything else is a message to channel */
     {

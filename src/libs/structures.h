@@ -17,7 +17,7 @@
 #include <openssl/err.h>
 #include <openssl/sha.h>
 
-#define TIMEOUT_INTERVAL 5
+#define TIMEOUT_INTERVAL 30
 
 /* Structures to be used for users */
 typedef struct userInformation
@@ -30,6 +30,7 @@ typedef struct userInformation
     struct timeval login_timeout;
     struct room_information* current_room;
     struct sockaddr_in* client;
+    struct game* the_game;
 } UserI;
 /* end of structures for the users */
 
@@ -52,4 +53,19 @@ typedef struct communication_message {
 	gchar* message;
 } communicateM;
 
+typedef struct game {
+    struct userInformation* player1;
+    struct userInformation* player2;
+
+    int p1;
+    int p2;
+
+    int acceptance;
+} TheG;
+
+typedef struct find_user {
+    struct userInformation* user1;
+    struct userInformation* user2;
+    gchar* stringuser2;
+} FindU;
 #endif

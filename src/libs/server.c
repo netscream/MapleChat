@@ -144,7 +144,6 @@ int run_server(int port_num)
             }
         }
 
-
         if(now.tv_sec > timeout.tv_sec)
         {
             debug_s("Checking timeout");
@@ -349,4 +348,5 @@ void initialize_user_struct(struct userInformation *new_user)
     new_user->username = NULL;
     new_user->nickname = NULL;
     new_user->count_logins = 0;
+    new_user->the_game = NULL;
 }
