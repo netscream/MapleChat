@@ -46,5 +46,7 @@ void disconnect_user(struct userInformation* user)
 {
     debug_s("Disconnecting user");
     g_tree_steal(connectionList, &user->fd);
+
+    /* TODO: free user struct */
 }
 

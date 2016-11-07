@@ -162,15 +162,28 @@ void process_message(char* message, struct userInformation* user)
     gchar* data = msg[1];
 
     gchar** command = g_strsplit(msg[0], " ", 0);
-    if ((g_strcmp0("USER", command[0]) != 0) && user->username == NULL)
+
+    if(g_strcmp0("QUIT", command[0]) == 0)
     {
+        log_to_console(user->client, "disconnected");
+        disconnect_user(user);
+    }
+    else if(g_strcmp0("PONG", command[0]) == 0)
+    {
+        debug_s("Recieved PONG");
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        user->login_timeout.tv_sec = now.tv_sec + (TIMEOUT_INTERVAL * 2) + 1;
+    }
+    else if ((g_strcmp0("USER", command[0]) != 0) && user->username == NULL)
+    {
+        /* If user is not authenticated he shouldn't be able to run the */
+        /* subsequent commands */
         SSL_write(user->sslFd,
                 "User needs to be authenticated to user server\n",
                 strlen("User needs to be authenticated to user server\n"));
-        return;
     }
-
-    if(g_strcmp0("USER", command[0]) == 0)
+    else if(g_strcmp0("USER", command[0]) == 0)
     {
         command_user(command, user, data);
     }

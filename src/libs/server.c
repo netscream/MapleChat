@@ -10,6 +10,9 @@ int run_server(int port_num)
     struct  sockaddr_in server;
     SSL_CTX* theSSLctx;
     int opt = 1;
+    struct timeval timeout;
+    gettimeofday(&timeout,NULL);
+    timeout.tv_sec += TIMEOUT_INTERVAL;
 
     /* Print the banner */
     print_banner();
@@ -49,8 +52,6 @@ int run_server(int port_num)
     roomsOnServerList = g_tree_new((GCompareFunc) g_ascii_strcasecmp);
     usersOnServerList = g_tree_new((GCompareFunc) g_ascii_strcasecmp);
 
-    struct timeval timeout;
-    gettimeofday(&timeout,NULL);
 
     while(1)
     {
@@ -59,12 +60,11 @@ int run_server(int port_num)
         int clientSockFd;
         SSL *sslclient;
         struct timeval tv;
-        struct timeval valid_timeout;
+        struct timeval now;
         iterArgs args;
 
-        tv.tv_sec = 30;
+        tv.tv_sec = TIMEOUT_INTERVAL;
         tv.tv_usec = 0;
-        gettimeofday(&valid_timeout,NULL);
         /* zero out connection on sockfd if there is any */
         FD_ZERO(&readFdSet);
         FD_SET(sockFd, &readFdSet);
@@ -86,6 +86,8 @@ int run_server(int port_num)
             perror("select");
             return 1;
         }
+
+        gettimeofday(&now,NULL);
 
         /* Check if the main socket is active then we have an */
         /* incoming connection */
@@ -117,6 +119,7 @@ int run_server(int port_num)
                     new_user->sslFd = sslclient;
                     new_user->fd = clientSockFd;
                     new_user->client = client;
+                    new_user->login_timeout.tv_sec = now.tv_sec + (TIMEOUT_INTERVAL * 2);
                     g_tree_insert(connectionList, &new_user->fd, new_user);
                     if (SSL_write(sslclient, "Server: Welcome!", 16) == -1)
                     {
@@ -141,16 +144,21 @@ int run_server(int port_num)
             }
         }
 
-        debug_s("Processing clients");
-        /* TODO: Iterate through all of the clients and check if */
-        /* their socket is active */
-        unsigned long int to =(valid_timeout.tv_sec - timeout.tv_sec);
-        /* printf("this is the timeout : %ld\n",(valid_timeout.tv_sec - timeout.tv_sec )); */
-        if(to >= 60){ 
-            debug_s("timeout has occurred");
+
+        if(now.tv_sec > timeout.tv_sec)
+        {
+            debug_s("Checking timeout");
+            g_tree_foreach(connectionList, (GTraverseFunc)iter_check_timeout, NULL);
+
+            debug_s("Sending PINGs");
+            g_tree_foreach(connectionList, (GTraverseFunc)iter_ping, NULL);
+
+            /* Resetting timeout */
             gettimeofday(&timeout,NULL);
-            g_tree_foreach(connectionList, (GTraverseFunc)iter_live_connections, &readFdSet);
+            timeout.tv_sec += TIMEOUT_INTERVAL;
         }
+
+        debug_s("Processing clients");
         g_tree_foreach(connectionList, (GTraverseFunc)iter_connections, &readFdSet);
     }
     /* exit server */
@@ -316,15 +324,16 @@ void logger(struct sockaddr_in *client, int type)
     strcat(buffer, inet_ntop(AF_INET, &(client->sin_addr), clBugg, len));
     strcat(buffer, ":");
     strcat(buffer, port_num);
+
     if (type == 0)
     {
         strcat(buffer, " connected");
     }
-    else
-        if (type == 1)
-        {
-            strcat(buffer, " disconnected");
-        }
+    else if (type == 1)
+    {
+        strcat(buffer, " disconnected");
+    }
+
     strcat(buffer, "\r\n");
     fprintf(logfp, "%s", buffer);
     printf("%s", buffer);
@@ -340,5 +349,4 @@ void initialize_user_struct(struct userInformation *new_user)
     new_user->username = NULL;
     new_user->nickname = NULL;
     new_user->count_logins = 0;
-    new_user->login_timeout = 0;
 }

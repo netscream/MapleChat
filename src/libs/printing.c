@@ -1,6 +1,6 @@
 #include "printing.h" //include header file
 
-/* 
+/*
  * Function printToOutput
  * for printing to output with a timestamp
  */
@@ -16,7 +16,7 @@ void print_to_output(char* message, int length)
     fprintf(stdout, "\n");
 }
 
-/* 
+/*
  * Function printToOutputRequest
  * for printing to output from requests with a timestamp
  */
@@ -35,7 +35,7 @@ void print_to_output_send_header(char* header, int one_if_from_client, struct so
     printf("-------------------------\n\n");
 }
 
-/* 
+/*
  * Function printToOutput
  * for printing to output from errors with a timestamp
  */
@@ -69,7 +69,7 @@ void print_banner()
  */
 void get_header_time(char* buffer, int mode)
 {
-    time_t timer = time(NULL); 
+    time_t timer = time(NULL);
     struct tm *loctime;
     loctime = localtime(&timer);
     if (mode == 1)
@@ -93,24 +93,18 @@ void log_to_console(struct sockaddr_in *client_addr, char *connection_state)
     int len = 20;
     char cl_bugg[len];
     memset(&cl_bugg, 0, len);
-    char buffer[512];
-    memset(&buffer, 0, 512);
     char the_time[21];
     memset(&the_time, 0, 21);
     char port_id[2];
     sprintf(port_id,"%d", ntohs(client_addr->sin_port));
     get_header_time(the_time, 2);
     debug_s("Creating buffer");
-    strcat(buffer, the_time); //time ISO-8601 compliant
-    strcat(buffer, " : ");
-    strcat(buffer, inet_ntop(AF_INET, &(client_addr)->sin_addr, cl_bugg, len)); //ip address
-    strcat(buffer, ":");
-    strcat(buffer, port_id); //port
-    strcat(buffer, " ");
-    strcat(buffer, " : ");
-    strcat(buffer, connection_state);
-    strcat(buffer, "\n");
-    printf("%s", buffer);
+
+    gchar* buf = g_strconcat( the_time, " : ",
+            inet_ntop(AF_INET, &(client_addr)->sin_addr, cl_bugg, len),
+            " : ", port_id, " : ", connection_state, "\n", NULL);
+    printf("%s", buf);
+    g_free(buf);
     debug_s("Returning from logtofile");
     return;
 }

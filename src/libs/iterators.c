@@ -1,26 +1,32 @@
 #include "iterators.h"
 
-gboolean iter_live_connections(gpointer key, gpointer value, gpointer data)
+gboolean iter_check_timeout(gpointer key, gpointer value, gpointer data)
 {
-    debug_s("Looping through iter_live_connections");
-    UserI* user = (UserI* ) value;
-   
-    if ((*(int*) key) == user->fd)
+    if (key != NULL && value != NULL)
     {
-        gchar* msg = g_strconcat("PING\n", NULL);
-        fd_set read_set = (*(fd_set*) data);
-        if (FD_ISSET(user->fd, &read_set))
+        struct timeval now;
+        UserI* user = (UserI* ) value;
+
+        gettimeofday(&now, NULL);
+
+        if(now.tv_sec > user->login_timeout.tv_sec)
         {
-            SSL_write(user->sslFd, msg, sizeof(msg));
-            char message[512];
-            memset(message, 0, sizeof(message));
-            SSL_read(user->sslFd, message, sizeof(message));
-            if(message == NULL || strcmp("", message) == 0)
-            {
-                disconnect_user(user);
-            }
+            log_to_console(user->client, "timed out.");
+            disconnect_user(user);
         }
     }
+
+    return 0;
+}
+
+gboolean iter_ping(gpointer key, gpointer value, gpointer data)
+{
+    if (key != NULL && value != NULL)
+    {
+        UserI* user = (UserI* ) value;
+        SSL_write(user->sslFd, "PING", sizeof("PING"));
+    }
+
     return 0;
 }
 
@@ -39,10 +45,6 @@ gboolean iter_connections(gpointer key, gpointer value, gpointer data)
         if (message != NULL && strcmp(message, "") != 0)
         {
             process_message(message , (struct userInformation*) user);
-        }
-        if(message == NULL || strcmp("", message) == 0)
-        {
-            iter_live_connections( key,  value, data);
         }
     }
     else
