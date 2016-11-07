@@ -40,6 +40,8 @@ gchar* user_get_hash(gchar* username)
 
     gsize length;
     gchar *passwd = (gchar*) g_base64_decode(passwd64, &length);
+
+    g_free(passwd64);
     return passwd;
 }
 
