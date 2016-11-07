@@ -128,6 +128,20 @@ int run_client(const char* server_ip, const int port_num)
         }
         
     }
+
+    if (user_name != NULL)
+    {
+        free(user_name);
+    }
+    if (chat_room != NULL)
+    {
+        free(chat_room);
+    }
+    if (prompt != NULL)
+    {
+        free(prompt);
+    }
+
     int sslErr = -1;
     sslErr = SSL_shutdown(server_ssl);
     if (sslErr == -1)
@@ -310,12 +324,14 @@ void readline_callback(char *line)
             ERR_print_errors_fp(stderr);
         }
 
+        free(line);
         rl_callback_handler_remove();
         signal_handler(SIGTERM);
         return;
     }
     else
     if (strncmp("/reconnect", line, 10) == 0) {
+        free(line);
         reconnect();
         return;
     }
@@ -341,6 +357,7 @@ void readline_callback(char *line)
         }
         g_free(send_message);
         free(competitor);
+        free(line);
         return;
     }
     else
@@ -352,6 +369,7 @@ void readline_callback(char *line)
             ERR_print_errors_fp(stderr);
         }
         g_free(send_message);
+        free(line);
         return;
     }
     else
@@ -363,6 +381,7 @@ void readline_callback(char *line)
             ERR_print_errors_fp(stderr);
         }
         g_free(send_message);
+        free(line);
         return;
     }
     else
@@ -374,6 +393,7 @@ void readline_callback(char *line)
             ERR_print_errors_fp(stderr);
         }
         g_free(send_message);
+        free(line);
         return;
     }
     if (strncmp("/join", line, 5) == 0) {
@@ -424,6 +444,7 @@ void readline_callback(char *line)
         {
             printf("%s", reply);
         }
+        free(line);
         rl_set_prompt(prompt);
         return;
     }
@@ -437,6 +458,7 @@ void readline_callback(char *line)
             ERR_print_errors_fp(stderr);
         }
         /* Query all available chat rooms */
+        free(line);
         rl_set_prompt(prompt);
         return;
     }
@@ -481,6 +503,8 @@ void readline_callback(char *line)
         }
         free(receiver);
         free(message);
+        free(line);
+        rl_set_prompt(prompt);
         return;
     }
     else
@@ -534,6 +558,7 @@ void readline_callback(char *line)
             prompt = strdup((char*) tmp);
             g_free(tmp);
         }
+        free(line);
         rl_set_prompt(prompt);
         return;
     }
@@ -545,6 +570,7 @@ void readline_callback(char *line)
             debug_s("SSL_WRITE error:");
             ERR_print_errors_fp(stderr);
         }
+        free(line);
         rl_set_prompt(prompt);
         return;
     }
@@ -553,6 +579,7 @@ void readline_callback(char *line)
         /* Sent the buffer to the server. */
         snprintf(buffer, 255, "Message: %s\n", line);
         SSL_write(server_ssl, buffer, strlen(buffer));
+        free(line);
     }
     write(STDOUT_FILENO, buffer, strlen(buffer));
     fsync(STDOUT_FILENO);
