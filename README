@@ -32,7 +32,6 @@ Readme for openssl chat server v0.1 *Still in alpha*
 	|- 9)
 		|- 9.1
 		|- 9.2
-	|- 10)
 ---------------------------------------------------------------
 1 => About application
 
@@ -40,7 +39,7 @@ Readme for openssl chat server v0.1 *Still in alpha*
 ---------------------------------------------------------------
 2 => Usage
 
-./httpd [PORT]
+./chatd [PORT]
 
 [PORT] - port number that is not in use on this system
 
@@ -48,19 +47,21 @@ For developement:
 	$ make                (Will compile the server)
 	$ make & make install (Will compile the server and install) (*needs evelated priveledges* **root access in most cases**)
 	$ make distclean	  (Will clean all compiled .o and application files)
+	$ make run_server	  (Will run a new instance of the chat server)
+	$ make run_client	  (Will run a new instance of the chat client)
 
 ---------------------------------------------------------------
 3 => Implement description
 
-httpd.c: 
-	
+httpd.c:
+
 --------------------------
 server.c: (server.h)
 	runServer():
 		Runs the server in infinit loop and waits for connection to socket.
 		when a message is received from socket it returns it to decodeMessage().
 
-	
+
 --------------------------
 printing.c: (printing.h)
 	printToOutput():
@@ -140,7 +141,7 @@ An optional company name []:.
 Creating certificate
 => openssl x509 -req -days 365 -in fd.csr -signkey fd.key -out fd.crt
 ************* Certificate creation is now done *******************
-Not so much security choosing the same password for the key and the 
+Not so much security choosing the same password for the key and the
 challange password.
 ******************************************************************
 
@@ -149,7 +150,7 @@ challange password.
 
 ---------------------------------------------------------------
 7 => Implementation of problems
-	|- 1) *DONE* 
+	|- 1) *DONE*
 		See comment section for implementation
 	|- 2)
 	|- 3)
@@ -158,13 +159,50 @@ challange password.
 	|- 6)
 		|- 6.1
 		|- 6.2
+            The passwords are stored in a key file which is located at `src/passwords.ini`.
+            The base64 encoded password hashes are stored in the `passwords` section, while
+            the salt is stored in plaintext in the `salts` section. Due to the fact that all
+            communication between the server and client are encrypted through public key
+            encryption, makes it impossible for someone without the private key to be able
+            to read the password in transit. So it is safe to send the password in plaintext
+            over this encrypted connection.
+
+            If our server would be breached by an attacker, he would be able to access our
+            private key. With the private key he can decrypt all incoming messages to the
+            server, making him able to see the user passwords in plaintext. If we would
+            hash the passwords client-side, then this wouldn't be an issue.
 	|- 7)
 		|- 7.1
 		|- 7.2
+            Private message should not be logged, then they wouldn't be private any more.
+            No meta data about the messages are logged, it's none of the admin's business
+            which users are privately conversing.
+
+            Due to this, our chat server is truly secure due to the fact that there aren't
+            any unencrypted logs of all messages on the server, which would in turn make
+            the chat server less secure. We make sure that the no one is able to retrieve
+            the contents of the conversation after it happend, making it a great place
+            to discuss top secret plans along with informing your friend Stacy that you
+            have a crush on Chad from school.
 	|- 8)
 		|- 8.1
 		|- 8.2
+            One could create thousands of connections to the server
+            An attacker might deploy a Denial of Service attack on the server by opening up
+            a bunch of connections while not maintaining them. This would leave the chat
+            server filled with zombie users, making it impossible for legitimate users to
+            connect to the server during the attack.
+
+            We employ a Ping/Pong technique to handle idle clients. The server sends a `ping`
+            to the client every 60 seconds. If the client doesn't respond with a `pong` within
+            30 seconds, the client is assumed to be idle and the connection is closed.
 	|- 9)
 		|- 9.1
 		|- 9.2
-	|- 10)
+            If the attacker is able to control the seed of the PRNG, he will be able to predict
+            whether he will win a game or not. The seed of our PRNG is the time of when the
+            server started. So if the attacker is able to forcefully restart the server (throug
+            crashes or other means) he is able to determine the seed of the PRNG.
+
+            This attack can be combated by making the entropy of the seed larger by making it
+            depend on more variables than just the start time.
