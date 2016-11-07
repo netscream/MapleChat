@@ -102,7 +102,7 @@ void log_to_console(struct sockaddr_in *client_addr, char *connection_state)
 
     gchar* buf = g_strconcat( the_time, " : ",
             inet_ntop(AF_INET, &(client_addr)->sin_addr, cl_bugg, len),
-            " : ", port_id, " : ", connection_state, "\n", NULL);
+            ":", port_id, " : ", connection_state, "\n", NULL);
     printf("%s", buf);
     g_free(buf);
     debug_s("Returning from logtofile");
