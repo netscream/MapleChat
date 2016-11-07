@@ -14,9 +14,8 @@ gchar* generate_salt()
 gchar* user_get_salt(gchar* username)
 {
     debug_s("Getting password salt");
-    GError* error = NULL;
     gchar *salt = g_key_file_get_string(keyfile, "salts",
-            username, &error);
+            username, NULL);
 
     if( salt == NULL )
     {
@@ -29,9 +28,8 @@ gchar* user_get_salt(gchar* username)
 gchar* user_get_hash(gchar* username)
 {
     debug_s("Getting password hash");
-    GError* error = NULL;
     gchar *passwd64 = g_key_file_get_string(keyfile, "passwords",
-            username, &error);
+            username, NULL);
 
     if( passwd64 == NULL )
     {
