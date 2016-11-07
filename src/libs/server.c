@@ -6,9 +6,10 @@
  */
 int run_server(int port_num)
 {
+    initialize_vars();
     int sockFd = -1, max_fd = 0;
     struct  sockaddr_in server;
-    SSL_CTX* theSSLctx;
+    SSL_CTX* theSSLctx = NULL ;
     int opt = 1;
     struct timeval timeout;
     gettimeofday(&timeout,NULL);
@@ -58,7 +59,6 @@ int run_server(int port_num)
         fd_set readFdSet;
         int activity = -1;
         int clientSockFd;
-        SSL *sslclient;
         struct timeval tv;
         struct timeval now;
         iterArgs args;
@@ -96,7 +96,7 @@ int run_server(int port_num)
             struct sockaddr_in *client = g_new0(struct sockaddr_in, 1);
             socklen_t clienLength = (socklen_t) sizeof(client);
             clientSockFd = accept(sockFd, (struct sockaddr*) client, &clienLength);
-
+            SSL* sslclient = NULL;	    
             sslclient = SSL_new(theSSLctx);
             if (sslclient != NULL)
             {
@@ -172,7 +172,7 @@ int run_server(int port_num)
     ERR_remove_state(0);
     ERR_free_strings();
     CRYPTO_cleanup_all_ex_data();
-
+    
 }
 
 /*
@@ -235,7 +235,7 @@ int initalize_server(struct sockaddr_in server)
 SSL_CTX* initialize_open_SSL_cert()
 {
     debug_s("Initializing the openssl certification!");
-    SSL_CTX* theSSLctx;
+    SSL_CTX* theSSLctx = NULL;
     SSL_library_init();         //initialize library
     OpenSSL_add_all_algorithms(); //add digest and ciphers
     SSL_load_error_strings();   //load errno strings
@@ -352,3 +352,13 @@ void initialize_user_struct(struct userInformation *new_user)
     new_user->count_logins = 0;
     new_user->the_game = NULL;
 }
+
+void initialize_vars()
+{
+    connectionList = NULL;
+    roomsOnServerList = NULL;
+    usersOnServerList = NULL;  
+    keyfile = NULL;
+
+}
+
