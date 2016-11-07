@@ -4,9 +4,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <glib.h>
+#include "debugging.h"
 #include "structures.h"
 
-inline int ROLL_DICE() { return ((int) floor(drand48() * 6.0) + 1); }
+int ROLL_DICE();
 
 void play_game(struct game* new_game, struct userInformation* user1, struct userInformation* user2);
 void roll_dice(struct game* new_game);

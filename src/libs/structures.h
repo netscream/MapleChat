@@ -50,7 +50,7 @@ typedef struct communication_message {
 	gchar* message;
 } communicateM;
 
-struct game {
+typedef struct game {
     struct userInformation* player1;
     struct userInformation* player2;
 
@@ -58,5 +58,11 @@ struct game {
     int p2;
 
     int acceptance; 
-};
+} TheG;
+
+typedef struct find_user {
+    struct userInformation* user1;
+    struct userInformation* user2;
+    gchar* stringuser2;
+} FindU;
 #endif

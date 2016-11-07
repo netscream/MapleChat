@@ -177,12 +177,14 @@ gboolean iter_users_privmsg(gpointer key, gpointer value, gpointer data)
 
 gboolean iter_users_find(gpointer key, gpointer value, gpointer data)
 {
-    gchar* from_user = ((struct communication_message*) data)->from_user;
+    gchar* find_this_user = ((struct find_user*) data)->stringuser2;
 
-    if (g_strcmp0((gchar*) from_user, (gchar*) key) == 0)
+    if (g_strcmp0((gchar*) find_this_user, (gchar*) key) == 0)
     {
-        struct communication_message* tmp = (struct communication_message*) data;
-        tmp->to_user = (gchar*) ((struct userInformation*) value);
+        debug_s("user found");
+        struct find_user* tmp = (struct find_user*) data;
+        tmp->user2 =  (struct userInformation*) value;
+        debug_s("End of find user iter");
         return 1;
     }
     return 0;

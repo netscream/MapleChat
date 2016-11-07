@@ -54,12 +54,12 @@ int run_client(const char* server_ip, const int port_num)
             break;
         }
         if (r == 0) {
-
+            
             /*
             write(STDOUT_FILENO, "No message?\n", 12);
-            fsync(STDOUT_FILENO);
+            fsync(STDOUT_FILENO); 
             */
-
+            
 
             /* Whenever you print out a message, call this
                to reprint the current input line. */
@@ -125,7 +125,7 @@ int run_client(const char* server_ip, const int port_num)
             }
             rl_forced_update_display();
         }
-
+        
     }
     int sslErr = -1;
     sslErr = SSL_shutdown(server_ssl);
@@ -324,9 +324,50 @@ void readline_callback(char *line)
             return;
         }
         /* Start game */
+        char *competitor = strdup(&(line[i]));
+        gchar* send_message = g_strconcat("PLAY ", competitor, NULL);
+        if (SSL_write(server_ssl, send_message, strlen(send_message)) == -1)
+        {
+            debug_s("SSL_WRITE error:");
+            ERR_print_errors_fp(stderr);
+        }
+        g_free(send_message);
+        free(competitor);
         return;
     }
     else
+    if (strncmp("/accept", line, 7) == 0) {
+        gchar* send_message = g_strconcat("ACCEPT", NULL);
+        if (SSL_write(server_ssl, send_message, strlen(send_message)) == -1)
+        {
+            debug_s("SSL_WRITE error:");
+            ERR_print_errors_fp(stderr);
+        }
+        g_free(send_message);
+        return;
+    }
+    else
+    if (strncmp("/reject", line, 7) == 0) {
+        gchar* send_message = g_strconcat("REJECT", NULL);
+        if (SSL_write(server_ssl, send_message, strlen(send_message)) == -1)
+        {
+            debug_s("SSL_WRITE error:");
+            ERR_print_errors_fp(stderr);
+        }
+        g_free(send_message);
+        return;
+    }
+    else
+    if (strncmp("/roll", line, 5) == 0) {
+        gchar* send_message = g_strconcat("ROLL", NULL);
+        if (SSL_write(server_ssl, send_message, strlen(send_message)) == -1)
+        {
+            debug_s("SSL_WRITE error:");
+            ERR_print_errors_fp(stderr);
+        }
+        g_free(send_message);
+        return;
+    }
     if (strncmp("/join", line, 5) == 0) {
         int i = 5;
         /* Skip whitespace */
@@ -430,6 +471,8 @@ void readline_callback(char *line)
             debug_s("SSL_WRITE error:");
             ERR_print_errors_fp(stderr);
         }
+        free(receiver);
+        free(message);
         return;
     }
     else
@@ -466,13 +509,10 @@ void readline_callback(char *line)
 
 
         /* Maybe update the prompt. */
-        char reply[64];
-        SSL_read(server_ssl, reply, 64);
-        if (g_str_has_suffix(reply, "authenticated"))
+        char reply[14];
+        SSL_read(server_ssl, reply, 14);
+        if (strncmp("Authenticated", reply, 13) == 0)
         {
-            write(STDOUT_FILENO, "Logged in\n", strlen("Logged in\n"));
-            fsync(STDOUT_FILENO);
-
             free(prompt);
             gchar* tmp = "";
             if (chat_room != NULL)
@@ -485,11 +525,6 @@ void readline_callback(char *line)
             }
             prompt = strdup((char*) tmp);
             g_free(tmp);
-        }
-        else
-        {
-            write(STDOUT_FILENO, "Incorrect Password\n", strlen("Incorrect Password\n"));
-            fsync(STDOUT_FILENO);
         }
         rl_set_prompt(prompt);
         return;

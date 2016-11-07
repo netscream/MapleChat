@@ -158,16 +158,25 @@ void channel_send_message(struct userInformation* user, gchar* data)
 
 void command_play(struct userInformation* user, gchar* data)
 {
-    struct communication_message tmp;
-    tmp.from_user = data;
-    tmp.to_user = NULL;
-    tmp.message = NULL;
+    struct find_user tmp;
+    tmp.user1 = user;
+    tmp.user2 = NULL;
+    tmp.stringuser2 = data;
+
     g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_users_find, (gpointer) &tmp);
-    if (tmp.to_user != NULL)
+    if (tmp.user2 != NULL)
     {
-        struct game *new_game = g_new0(struct game, 1);
-        struct userInformation* user2 = (struct userInformation*) tmp.to_user;
-        play_game(new_game, user, user2);
+        debug_s("User 2 is not null");
+        struct userInformation* user2 = (struct userInformation*) tmp.user2;
+        if (g_strcmp0(user->nickname, user2->nickname) == 0)
+        {
+            SSL_write(user->sslFd, "Cannot play with yourself!", 26);
+        }
+        else
+        {
+            struct game *new_game = NULL;
+            play_game(new_game, user, user2);
+        }
     }
     else
     {
@@ -197,6 +206,11 @@ void command_reject(struct userInformation* user)
     {
         reject_play(user->the_game);
     }
+}
+
+void command_roll(struct userInformation* user)
+{
+    roll_dice(user->the_game);
 }
 
 void process_message(char* message, struct userInformation* user)
@@ -235,7 +249,7 @@ void process_message(char* message, struct userInformation* user)
     }
     else if(g_strcmp0("PLAY", command[0]) == 0)
     {
-        command_play(user, data);
+        command_play(user, command[2]);
     }
     else if(g_strcmp0("ACCEPT", command[0]) == 0)
     {
@@ -244,6 +258,10 @@ void process_message(char* message, struct userInformation* user)
     else if(g_strcmp0("REJECT", command[0]) == 0)
     {
         command_reject(user);
+    }
+    else if(g_strcmp0("ROLL", command[0]) == 0)
+    {
+        command_roll(user);
     }
     else /* lets assume everything else is a message to channel */
     {
