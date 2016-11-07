@@ -54,12 +54,12 @@ int run_client(const char* server_ip, const int port_num)
             break;
         }
         if (r == 0) {
-            
+
             /*
             write(STDOUT_FILENO, "No message?\n", 12);
-            fsync(STDOUT_FILENO); 
+            fsync(STDOUT_FILENO);
             */
-            
+
 
             /* Whenever you print out a message, call this
                to reprint the current input line. */
@@ -126,7 +126,7 @@ int run_client(const char* server_ip, const int port_num)
             }
             rl_forced_update_display();
         }
-        
+
     }
 
     if (user_name != NULL)
@@ -234,9 +234,9 @@ void reconnect()
     if (chat_room != NULL)
     {
         free(chat_room);
-        chat_room = NULL;       
-    }   
-    
+        chat_room = NULL;
+    }
+
     free(prompt);
     prompt = strdup("> ");
     rl_set_prompt(prompt);
@@ -510,6 +510,7 @@ void readline_callback(char *line)
             debug_s("SSL_WRITE error:");
             ERR_print_errors_fp(stderr);
         }
+        free(send_message);
         free(receiver);
         free(message);
         free(line);
