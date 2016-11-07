@@ -34,37 +34,43 @@ gboolean iter_ping(gpointer key, gpointer value, gpointer data)
 
 gboolean iter_connections(gpointer key, gpointer value, gpointer data)
 {
-    UserI* user = (UserI* ) value;
+    if (key != NULL && value != NULL)
+    {
+        UserI* user = (UserI* ) value;
 
-    if (FD_ISSET(*((int*) key), (fd_set *)data))
-    {
-        debug_d("Socket active No #", user->fd);
-        char message[512];
-        memset(message, 0, sizeof(message));
-        SSL_read(user->sslFd, message, sizeof(message));
-        debug_s("Message:");
-        debug_s(message);
-        if (message != NULL && strcmp(message, "") != 0)
+        if (FD_ISSET(*((int*) key), (fd_set *)data))
         {
-            process_message(message , (struct userInformation*) user);
+            debug_d("Socket active No #", user->fd);
+            char message[512];
+            memset(message, 0, sizeof(message));
+            SSL_read(user->sslFd, message, sizeof(message));
+            debug_s("Message:");
+            debug_s(message);
+            if (message != NULL && strcmp(message, "") != 0)
+            {
+                process_message(message , (struct userInformation*) user);
+            }
         }
-    }
-    else
-    {
-        debug_d("Socket inactive No #", user->fd);
+        else
+        {
+            debug_d("Socket inactive No #", user->fd);
+        }
     }
     return 0;
 }
 
 gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data)
 {
-    UserI* user = (UserI* ) value;
-    iterArgs* args = (iterArgs *) data;
+    if (key != NULL && value != NULL)
+    {
+        UserI* user = (UserI* ) value;
+        iterArgs* args = (iterArgs *) data;
 
-    FD_SET(*((int*) key), args->readFdSet);
+        FD_SET(*((int*) key), args->readFdSet);
 
-    if(user->fd > *(args->max_fd))
-        *(args->max_fd) = user->fd;
+        if(user->fd > *(args->max_fd))
+            *(args->max_fd) = user->fd;
+    }
 
     return 0;
 }
@@ -165,31 +171,37 @@ gboolean iter_rooms(gpointer key, gpointer value, gpointer data)
 
 gboolean iter_users_privmsg(gpointer key, gpointer value, gpointer data)
 {
-    gchar* to_user = ((struct communication_message*) data)->to_user;
-    debug_s(to_user);
-    if (g_strcmp0((gchar*) to_user, (gchar*) key) == 0)
+    if (key != NULL && value != NULL)
     {
-        UserI* temp = (UserI*) value;
-        gchar* send_string = g_strconcat("Privmsg from ", ((struct communication_message*) data)->from_user, " => ", ((struct communication_message*) data)->message, NULL);
-        debug_s(send_string);
-        SSL_write(temp->sslFd, send_string, strlen(send_string));
-        g_free(send_string);
-        return 1;
+        gchar* to_user = ((struct communication_message*) data)->to_user;
+        debug_s(to_user);
+        if (g_strcmp0((gchar*) to_user, (gchar*) key) == 0)
+        {
+            UserI* temp = (UserI*) value;
+            gchar* send_string = g_strconcat("Privmsg from ", ((struct communication_message*) data)->from_user, " => ", ((struct communication_message*) data)->message, NULL);
+            debug_s(send_string);
+            SSL_write(temp->sslFd, send_string, strlen(send_string));
+            g_free(send_string);
+            return 1;
+        }
     }
     return 0;
 }
 
 gboolean iter_users_find(gpointer key, gpointer value, gpointer data)
 {
-    gchar* find_this_user = ((struct find_user*) data)->stringuser2;
-
-    if (g_strcmp0((gchar*) find_this_user, (gchar*) key) == 0)
+    if (key != NULL && value != NULL)
     {
-        debug_s("user found");
-        struct find_user* tmp = (struct find_user*) data;
-        tmp->user2 =  (struct userInformation*) value;
-        debug_s("End of find user iter");
-        return 1;
+        gchar* find_this_user = ((struct find_user*) data)->stringuser2;
+
+        if (g_strcmp0((gchar*) find_this_user, (gchar*) key) == 0)
+        {
+            debug_s("user found");
+            struct find_user* tmp = (struct find_user*) data;
+            tmp->user2 =  (struct userInformation*) value;
+            debug_s("End of find user iter");
+            return 1;
+        }
     }
     return 0;
 }

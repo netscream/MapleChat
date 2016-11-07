@@ -12,7 +12,7 @@
  * Change this value to 1 (or something other than 0) to get debug function to work for tftp server
  *
  */
-#define debug 1
+#define debug 0
 
 /*
  * Function to print timestamp to output

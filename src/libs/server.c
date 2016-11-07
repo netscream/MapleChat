@@ -171,6 +171,8 @@ int run_server(int port_num)
     SSL_CTX_free(theSSLctx);
     ERR_remove_state(0);
     ERR_free_strings();
+    CRYPTO_cleanup_all_ex_data();
+
 }
 
 /*
