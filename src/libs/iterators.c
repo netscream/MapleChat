@@ -2,6 +2,7 @@
 
 gboolean iter_check_timeout(gpointer key, gpointer value, gpointer data)
 {
+    if (data != NULL) { data = NULL; } //disable compile warnings
     if (key != NULL && value != NULL)
     {
         struct timeval now;
@@ -21,6 +22,7 @@ gboolean iter_check_timeout(gpointer key, gpointer value, gpointer data)
 
 gboolean iter_ping(gpointer key, gpointer value, gpointer data)
 {
+    if (data != NULL) { data = NULL; } //disable compile warnings
     if (key != NULL && value != NULL)
     {
         UserI* user = (UserI* ) value;

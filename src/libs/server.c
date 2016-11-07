@@ -52,7 +52,7 @@ int run_server(int port_num)
     roomsOnServerList = g_tree_new((GCompareFunc) g_ascii_strcasecmp);
     usersOnServerList = g_tree_new((GCompareFunc) g_ascii_strcasecmp);
 
-
+    printf("Server is started\n");
     while(1)
     {
         fd_set readFdSet;
