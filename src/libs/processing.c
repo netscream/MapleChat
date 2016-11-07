@@ -158,17 +158,45 @@ void channel_send_message(struct userInformation* user, gchar* data)
 
 void command_play(struct userInformation* user, gchar* data)
 {
-
+    struct communication_message tmp;
+    tmp.from_user = data;
+    tmp.to_user = NULL;
+    tmp.message = NULL;
+    g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_users_find, (gpointer) &tmp);
+    if (tmp.to_user != NULL)
+    {
+        struct game *new_game = g_new0(struct game, 1);
+        struct userInformation* user2 = (struct userInformation*) tmp.to_user;
+        play_game(new_game, user, user2);
+    }
+    else
+    {
+        SSL_write(user->sslFd, "No such user found!", 19);
+    }
 }
 
-void command_accept(struct userInformation* user, gchar* data)
+void command_accept(struct userInformation* user)
 {
-
+    if (user->the_game == NULL)
+    {
+        SSL_write(user->sslFd, "No game running\n", 17);
+    }
+    else
+    {
+        accept_play(user->the_game);
+    }
 }
 
-void command_reject(struct userInformation* user, gchar* data)
+void command_reject(struct userInformation* user)
 {
-
+    if (user->the_game == NULL)
+    {
+        SSL_write(user->sslFd, "No game running\n", 17);
+    }
+    else
+    {
+        reject_play(user->the_game);
+    }
 }
 
 void process_message(char* message, struct userInformation* user)
@@ -211,11 +239,11 @@ void process_message(char* message, struct userInformation* user)
     }
     else if(g_strcmp0("ACCEPT", command[0]) == 0)
     {
-        command_accept(user, data);
+        command_accept(user);
     }
     else if(g_strcmp0("REJECT", command[0]) == 0)
     {
-        command_reject(user, data);
+        command_reject(user);
     }
     else /* lets assume everything else is a message to channel */
     {

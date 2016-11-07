@@ -174,3 +174,16 @@ gboolean iter_users_privmsg(gpointer key, gpointer value, gpointer data)
     }
     return 0;
 }
+
+gboolean iter_users_find(gpointer key, gpointer value, gpointer data)
+{
+    gchar* from_user = ((struct communication_message*) data)->from_user;
+
+    if (g_strcmp0((gchar*) from_user, (gchar*) key) == 0)
+    {
+        struct communication_message* tmp = (struct communication_message*) data;
+        tmp->to_user = (gchar*) ((struct userInformation*) value);
+        return 1;
+    }
+    return 0;
+}

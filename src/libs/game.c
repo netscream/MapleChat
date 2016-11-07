@@ -10,18 +10,19 @@ void play_game(struct game* new_game, struct userInformation* user1, struct user
 		new_game->p1 = 0;
 		new_game->p2 = 0;
 		new_game->acceptance = 0;
-		gchar* tmp = g_strconcat("You have been challenged to a game of Dice by ",, NULL);
+		gchar* tmp = g_strconcat("You have been challenged to a game of Dice by ", NULL);
 		SSL_write(new_game->player1->sslFd, tmp, strlen(tmp));
 	}
 	else
 	{
-		if (strncmp(user1->nickname, new_game->player1, strlen(new_game->player1)) == 0)
+		gchar* tmp = NULL;
+		if (strncmp(user1->nickname, new_game->player1->nickname, strlen(user1->nickname)) == 0)
 		{
-			gchar* tmp = g_strconcat("You are playing against user:", new_game->player2, "\n", "If you want to quit that game write /stopplay\n", NULL);
+			tmp = g_strconcat("You are playing against user:", new_game->player2, "\n", "If you want to quit that game write /stopplay\n", NULL);
 		}
 		else
 		{
-			gchar* tmp = g_strconcat("You are playing against user:", new_game->player1, "\n", "If you want to quit that game write /stopplay\n", NULL);
+			tmp = g_strconcat("You are playing against user:", new_game->player1, "\n", "If you want to quit that game write /stopplay\n", NULL);
 		}
 		SSL_write(new_game->player1->sslFd, tmp, strlen(tmp));
 		g_free(tmp);
@@ -61,7 +62,7 @@ void roll_dice(struct game* new_game)
 	}
 	else
 	{
-		SSL_write(player1->ssl, "No game on, challenge someone or wait for acceptance!", 32);
+		SSL_write(new_game->player1->sslFd, "No game on, challenge someone or wait for acceptance!", 32);
 	}
 }
 

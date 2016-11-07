@@ -50,4 +50,13 @@ typedef struct communication_message {
 	gchar* message;
 } communicateM;
 
+struct game {
+    struct userInformation* player1;
+    struct userInformation* player2;
+
+    int p1;
+    int p2;
+
+    int acceptance; 
+};
 #endif
