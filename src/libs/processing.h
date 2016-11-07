@@ -10,6 +10,8 @@ void command_join(gchar** command, struct userInformation* user);
 void command_private_message(gchar** command, struct userInformation* user, gchar* data);
 void command_who(struct userInformation* user);
 void channel_send_message(struct userInformation* user, gchar* data);
+void command_play(struct userInformation* user, gchar* data);
+void command_accept(struct userInformation* user, gchar* data);
+void command_reject(struct userInformation* user, gchar* data);
 void process_message(char* message, struct userInformation* user);
-
 #endif
