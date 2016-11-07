@@ -59,6 +59,8 @@ void disconnect_user(struct userInformation* user)
         tmp->player2->the_game = NULL;
         g_free(tmp);
     }
+    close(user->fd);
+    SSL_free(user->sslFd);
     g_free(user->client);
     g_free(user);
 }

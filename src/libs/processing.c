@@ -52,9 +52,10 @@ void command_list(struct userInformation* user)
     {
         debug_s(list_of_chans);
         gchar* tmp = g_strconcat("Channels on server: ", list_of_chans, "\n", NULL);
-        g_free(list_of_chans);
         SSL_write(user->sslFd, tmp, strlen(tmp));
+        g_free(tmp);
     }
+    g_free(list_of_chans);
 }
 
 void command_join(gchar** command, struct userInformation* user)
@@ -113,9 +114,10 @@ void command_who(struct userInformation* user)
     {
         debug_s(list_of_users);
         gchar* tmp = g_strconcat("Users on server: \n", list_of_users, "\n", NULL);
-        g_free(list_of_users);
         SSL_write(user->sslFd, tmp, strlen(tmp));
+        g_free(tmp);
     }
+    g_free(list_of_users);
 }
 
 void command_private_message(gchar** command, struct userInformation* user, gchar* data)

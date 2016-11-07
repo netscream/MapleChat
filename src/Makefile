@@ -1,7 +1,7 @@
 CC = gcc
 GLIBUBUNTUFIX = -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include \
-    -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
-GLIBS = ${GLIBUBUNTUFIX} `pkg-config --cflags --libs glib-2.0`
+    -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DPURIFY 
+GLIBS = -DPURIFY ${GLIBUBUNTUFIX} `pkg-config --cflags --libs glib-2.0`
 CFLAGS = -std=gnu11 -O2 -g -Wall -Wextra -Wformat=2 $(shell pkg-config glib-2.0 openssl --cflags)
 
 all: chatd chat
