@@ -3,7 +3,7 @@
 int run_client(const char* server_ip, const int port_num)
 {
     debug_s("Run client");
-    theSSLctx = NULL;
+    initialize_vars();
     initialize_exitfd();
     initialize_openSSL_cert();
     if (theSSLctx == NULL)
@@ -226,8 +226,17 @@ void reconnect()
         debug_s("SSL connect error:");
         print_SSL_error(SSL_get_error(server_ssl, sslErr));
     }
-    user_name = NULL;
-    chat_room = NULL;
+    if (user_name != NULL)
+    {
+        free(user_name);
+        user_name = NULL;
+    }
+    if (chat_room != NULL)
+    {
+        free(chat_room);
+        chat_room = NULL;       
+    }   
+    
     free(prompt);
     prompt = strdup("> ");
     rl_set_prompt(prompt);
@@ -623,3 +632,12 @@ void initialize_openSSL_cert()
      */
 }
 
+void initialize_vars()
+{
+    server_fd = -1;
+    server_ssl = NULL;
+    theSSLctx = NULL;
+    user_name = NULL;
+    chat_room = NULL;
+    prompt = NULL;
+}

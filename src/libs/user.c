@@ -50,4 +50,3 @@ void disconnect_user(struct userInformation* user)
     g_free(user->client);
     g_free(user);
 }
-

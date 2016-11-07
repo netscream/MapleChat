@@ -64,4 +64,5 @@ void initialize_exitfd(void);
 void readline_callback(char *line);
 void initialize_openSSL_cert();
 void reconnect();
+void initialize_vars();
 #endif
