@@ -34,14 +34,19 @@ $ make run_client      (Will run a new instance of the chat client)
 ##Modules
 
 ###chatd.c
-Calls run_server in server.c
+Calls `run_server` in server.c
 
 ###chat.c
-Calls run_client in client.c
+Calls `run_client` in client.c
 
 ###server.c (server.h)
-Runs the server in infinit loop and waits for connection to socket.
-when a message is received from socket it returns it to decodeMessage().
+Main loop of the server. Here we initialize all of the data structures we need for the
+server to function. In each iteration of the main loop, we check if incoming connections
+are coming in on the main socket, if so we initialize a new connection adding a new user
+to our user list. Then we iterate through each connection in our connection list and check
+if their file descriptor is active, if so we process their message. We send a `ping` to the
+client every two iterations (every minute), if the client doesn't respond with a `pong`
+within 30 seconds we assume it's idle and disconnect the user.
 
 ###client.c (client.h)
 Explain briefly what this file contains
@@ -54,13 +59,31 @@ Only for debugging the applictaion. To be able to use these functions
 please change the "#define debug" macro inside debugging.h to 1 etc. (#define debug 1)
 
 ###user.c (user.h)
-Explain briefly what this file contains
+Includes logic for user authentication and disconnecting of users.
+
+When authenticating a user, we check if we already stored a hash for that user, if not
+we create a new user and generate a salted hash of the user's password storing both the
+hash and the salt in a keyfile. Otherwise we hash the incoming password and check if it
+matches the stored hash. Matching hashes means that the user has been authenticated.
+
+When disconnecting a user we remove the user from the connection list and delete the user
+object.
 
 ###processing.c (processing.h)
-Explain briefly what this file contains
+Here we process all the messages from the client.
+
+In `process_message` we check if the message is a request for any of the available
+commands. When a command is matched, a function for that command is called.
+
+If we recieve a `PONG` message from the client, we reset the `login_timeout` of the
+user so he doesn't get disconnected.
+
+If no command is matched, the message is assumed to be a message to the current
+chat room.
 
 ###structures.h
-Explain briefly what this file contains
+Contains all the structs required for the application. We have structs for user information,
+room information, communication messages, games and more.
 
 ###iterators.c (iterators.h)
 Explain briefly what this file contains
@@ -69,7 +92,8 @@ Explain briefly what this file contains
 Explain briefly what this file contains
 
 ###authentication.c (authentication.h)
-Explain briefly what this file contains
+Functionality which relates to hashing passwords, storing and retrieving said hashes and generating
+salts. (explained in `user.c`)
 
 ##File structure
 
