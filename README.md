@@ -185,12 +185,17 @@ challange password.
 ##Implementation of problems
     |- 1) *DONE*
         See comment section for implementation
-    |- 2)
-    |- 3)
-    |- 4)
-    |- 5)
+    |- 2) *DONE*
+        See server.c and client.c
+    |- 3) *DONE*
+        see server.c and client.c
+    |- 4) *DONE*
+        see processing.c
+    |- 5) *DONE*
+        see processing.c
     |- 6)
-        |- 6.1
+        |- 6.1 *DONE*
+            see authentivaction.c
         |- 6.2
             The passwords are stored in a key file which is located at `src/passwords.ini`.
             The base64 encoded password hashes are stored in the `passwords` section, while
@@ -205,7 +210,8 @@ challange password.
             server, making him able to see the user passwords in plaintext. If we would
             hash the passwords client-side, then this wouldn't be an issue.
     |- 7)
-        |- 7.1
+        |- 7.1 *DONE*
+            see processing.c
         |- 7.2
             Private message should not be logged, then they wouldn't be private any more.
             No meta data about the messages are logged, it's none of the admin's business
@@ -218,7 +224,8 @@ challange password.
             to discuss top secret plans along with informing your friend Stacy that you
             have a crush on Chad from school.
     |- 8)
-        |- 8.1
+        |- 8.1 *DONE*
+            see iterators.c
         |- 8.2
             One could create thousands of connections to the server
             An attacker might deploy a Denial of Service attack on the server by opening up
@@ -230,7 +237,8 @@ challange password.
             to the client every 60 seconds. If the client doesn't respond with a `pong` within
             30 seconds, the client is assumed to be idle and the connection is closed.
     |- 9)
-        |- 9.1
+        |- 9.1 *DONE*
+            see game.c
         |- 9.2
             If the attacker is able to control the seed of the PRNG, he will be able to predict
             whether he will win a game or not. The seed of our PRNG is the time of when the
