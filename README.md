@@ -2,48 +2,74 @@ MapleChat
 ===
 
 ##About
-
+A secure chat server written in C using OpenSSL. The server is heavily based on IRC.
 
 ##Usage
-###Running the server
-To run the server
+###Server
+To run the server execute
 
 ```
 ./chatd [PORT]
-
-
 ```
 where `[PORT]` is a port number that is not in use on this system.
 
+###Client
+To run the client execute
+
+```
+./chat [ADDRESS] [PORT]
+```
+where `[PORT]` is a port number that is not in use on this system and `[ADDRESS]`
+is an address of a host running the server.
+
 ###Development
 ```
-    $ make                (Will compile the server)
-    $ make & make install (Will compile the server and install) (*needs evelated priveledges* **root access in most cases**)
-    $ make distclean      (Will clean all compiled .o and application files)
-    $ make run_server      (Will run a new instance of the chat server)
-    $ make run_client      (Will run a new instance of the chat client)
-
+$ make                (Will compile the server)
+$ make & make install (Will compile the server and install) (*needs evelated priveledges* **root access in most cases**)
+$ make distclean      (Will clean all compiled .o and application files)
+$ make run_server      (Will run a new instance of the chat server)
+$ make run_client      (Will run a new instance of the chat client)
 ```
 
 ##Modules
 
 ###chatd.c
-    Calls run_server in server.c
+Calls run_server in server.c
 
 ###chat.c
-    Calls run_client in client.c
+Calls run_client in client.c
 
-###server.c: (server.h)
-    Runs the server in infinit loop and waits for connection to socket.
-    when a message is received from socket it returns it to decodeMessage().
+###server.c (server.h)
+Runs the server in infinit loop and waits for connection to socket.
+when a message is received from socket it returns it to decodeMessage().
 
+###client.c (client.h)
+Explain briefly what this file contains
 
-###printing.c: (printing.h)
-    Responsible for all printing to the console.
+###printing.c (printing.h)
+Responsible for all printing to the console.
 
-###debugging.c: (debugging.h)
-    Only for debugging the applictaion. To be able to use these functions
-    please change the "#define debug" macro inside debugging.h to 1 etc. (#define debug 1)
+###debugging.c (debugging.h)
+Only for debugging the applictaion. To be able to use these functions
+please change the "#define debug" macro inside debugging.h to 1 etc. (#define debug 1)
+
+###user.c (user.h)
+Explain briefly what this file contains
+
+###processing.c (processing.h)
+Explain briefly what this file contains
+
+###structures.h
+Explain briefly what this file contains
+
+###iterators.c (iterators.h)
+Explain briefly what this file contains
+
+###game.c (game.h)
+Explain briefly what this file contains
+
+###authentication.c (authentication.h)
+Explain briefly what this file contains
 
 ##File structure
 
