@@ -119,10 +119,16 @@ int run_client(const char* server_ip, const int port_num)
                     ERR_print_errors_fp(stderr);
                 }
             }
+            else if (strncmp("DISCONNECT", message, 10) == 0)
+            {
+                debug_s("Quitting");
+                rl_callback_handler_remove();
+                signal_handler(SIGTERM);
+            }
             else
             {
                 /* Just print out the message */
-                printf("%s\n", message);
+                printf("Server: %s\n", message);
             }
             rl_forced_update_display();
         }

@@ -96,7 +96,7 @@ int run_server(int port_num)
             struct sockaddr_in *client = g_new0(struct sockaddr_in, 1);
             socklen_t clienLength = (socklen_t) sizeof(client);
             clientSockFd = accept(sockFd, (struct sockaddr*) client, &clienLength);
-            SSL* sslclient = NULL;	    
+            SSL* sslclient = NULL;
             sslclient = SSL_new(theSSLctx);
             if (sslclient != NULL)
             {
@@ -121,7 +121,7 @@ int run_server(int port_num)
                     new_user->client = client;
                     new_user->login_timeout.tv_sec = now.tv_sec + (TIMEOUT_INTERVAL * 2);
                     g_tree_insert(connectionList, &new_user->fd, new_user);
-                    if (SSL_write(sslclient, "Server: Welcome!", 16) == -1)
+                    if (SSL_write(sslclient, "Welcome to MapleChat v1.0!", 26) == -1)
                     {
                         debug_s("SSL_WRITE error:");
                         ERR_print_errors_fp(stderr);
@@ -172,7 +172,7 @@ int run_server(int port_num)
     ERR_remove_state(0);
     ERR_free_strings();
     CRYPTO_cleanup_all_ex_data();
-    
+
 }
 
 /*
@@ -357,7 +357,7 @@ void initialize_vars()
 {
     connectionList = NULL;
     roomsOnServerList = NULL;
-    usersOnServerList = NULL;  
+    usersOnServerList = NULL;
     keyfile = NULL;
 
 }

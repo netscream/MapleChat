@@ -46,6 +46,9 @@ int user_authenticate(gchar* username, gchar* passwd)
 void disconnect_user(struct userInformation* user)
 {
     debug_s("Disconnecting user");
+
+    SSL_write(user->sslFd, "DISCONNECT", strlen("DISCONNECT"));
+
     g_tree_steal(connectionList, &user->fd);
 
     if (user->username != NULL)

@@ -35,7 +35,7 @@ void command_user(gchar** command, struct userInformation* user, gchar* data)
         log_message = g_strconcat(command[1], " authentication error", NULL);
         log_to_console(user->client, log_message);
         user->count_logins++;
-        SSL_write(user->sslFd, "Auth Error", 13);
+        SSL_write(user->sslFd, "Auth Error", 14);
     }
     if(log_message != NULL)
     {
@@ -64,9 +64,9 @@ void command_join(gchar** command, struct userInformation* user)
     if(user->current_room != NULL)
     {
         struct room_information* tmp_room = user->current_room;
-        printf("g_list length = %d\n", g_list_length(tmp_room->user_list));
+        /* printf("g_list length = %d\n", g_list_length(tmp_room->user_list)); */
         tmp_room->user_list = g_list_remove(tmp_room->user_list, user);
-        printf("g_list length = %d\n", g_list_length(tmp_room->user_list));
+        /* printf("g_list length = %d\n", g_list_length(tmp_room->user_list)); */
         if (g_list_length(tmp_room->user_list) == 0)
         {
             g_list_free(tmp_room->user_list);
@@ -79,7 +79,7 @@ void command_join(gchar** command, struct userInformation* user)
         debug_s("Old room removed \n");
     }
 
-    printf("joining this room  %s\n",command[1]);
+    /* printf("joining this room  %s\n",command[1]); */
     RoomI *room = NULL;
     debug_s(command[1]);
     room = g_tree_lookup(roomsOnServerList, (gchar*) command[1]);
@@ -100,7 +100,7 @@ void command_join(gchar** command, struct userInformation* user)
     user->current_room = (struct room_information*) room;
     debug_s(user->current_room->room_name);
     debug_s(room->room_name);
-    printf("joined this room, %s\n",command[1]);
+    /* printf("joined this room, %s\n",command[1]); */
     SSL_write(user->sslFd, " ", 1);
 }
 
