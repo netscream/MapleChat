@@ -1,6 +1,7 @@
 #ifndef ITERATORS_H
 #define ITERATORS_H
 #include "server.h"
+/* All function comments are in c file */
 
 gboolean iter_connections(gpointer key, gpointer value, gpointer data);
 gboolean iter_check_timeout(gpointer key, gpointer value, gpointer data);

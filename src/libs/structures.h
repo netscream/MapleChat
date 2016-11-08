@@ -18,7 +18,7 @@
 #include <openssl/sha.h>
 
 #define TIMEOUT_INTERVAL 30
-
+/* All function comments are in c file */
 /* Structures to be used for users */
 typedef struct userInformation
 {

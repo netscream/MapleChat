@@ -302,6 +302,11 @@ gint fd_cmp(gconstpointer fd1,  gconstpointer fd2, gpointer G_GNUC_UNUSED data)
     return GPOINTER_TO_INT(fd1) - GPOINTER_TO_INT(fd2);
 }
 
+/*
+ * Function logger
+ * Used for logging all connections and authentications to console
+ *
+ */
 void logger(struct sockaddr_in *client, int type)
 {
     debug_s("Logging to file");
@@ -343,6 +348,10 @@ void logger(struct sockaddr_in *client, int type)
     return;
 }
 
+/*
+ * Function initialize user struct
+ * used for user struct initialitation88
+ */
 void initialize_user_struct(struct userInformation *new_user)
 {
     new_user->sslFd = NULL;
@@ -353,6 +362,10 @@ void initialize_user_struct(struct userInformation *new_user)
     new_user->the_game = NULL;
 }
 
+/*
+ * Function initliaze vars
+ * Used to initialize all vars at startup
+ */
 void initialize_vars()
 {
     connectionList = NULL;

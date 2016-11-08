@@ -1,4 +1,8 @@
 #include "authentication.h"
+/*
+ * Function generate salt
+ * Used for salt generation
+ */
 gchar* generate_salt()
 {
     debug_s("Generating new salt");
@@ -11,6 +15,10 @@ gchar* generate_salt()
     return salt;
 }
 
+/*
+ * Function user get salt
+ * used to get the hash for user from file
+ */
 gchar* user_get_salt(gchar* username)
 {
     debug_s("Getting password salt");
@@ -25,6 +33,10 @@ gchar* user_get_salt(gchar* username)
     return salt;
 }
 
+/*
+ * Function user get hash
+ * Used to get the user hash from file and decode it
+ */
 gchar* user_get_hash(gchar* username)
 {
     debug_s("Getting password hash");
@@ -43,6 +55,10 @@ gchar* user_get_hash(gchar* username)
     return passwd;
 }
 
+/*
+ * Function user get salt
+ * used to get the hash for user from file
+ */
 gchar* user_hash_password(gchar* passwd, gchar* salt)
 {
     debug_s("Hashing user password");
@@ -60,6 +76,10 @@ gchar* user_hash_password(gchar* passwd, gchar* salt)
     return hash;
 }
 
+/*
+ * Function user set hash
+ * Used to set the user hash for file
+ */
 void user_set_hash(gchar* username, gchar* passwd)
 {
     gchar* salt = generate_salt();

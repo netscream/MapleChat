@@ -1,5 +1,9 @@
 #include "user.h"
 
+/*
+ * Function use_authenticate
+ * Used to authenticate user hashed password
+ */
 int user_authenticate(gchar* username, gchar* passwd)
 {
     debug_s("Authenticating user");
@@ -43,6 +47,10 @@ int user_authenticate(gchar* username, gchar* passwd)
     return 0;
 }
 
+/*
+ * Function disconnect_user
+ * Called when user needs to be disconnected
+ */
 void disconnect_user(struct userInformation* user)
 {
     debug_s("Disconnecting user");

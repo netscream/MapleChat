@@ -5,6 +5,8 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+/* All function comments are in c file */
+
 void getpasswd(const char *prompt, char *passwd, size_t size);
 
 #endif

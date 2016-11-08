@@ -1,5 +1,9 @@
 #include "iterators.h"
 
+/*
+ * Function iter check timeout
+ * used for iteration over gtree to check if user gets a timeout
+ */
 gboolean iter_check_timeout(gpointer key, gpointer value, gpointer data)
 {
     if (data != NULL) { data = NULL; } //disable compile warnings
@@ -20,6 +24,10 @@ gboolean iter_check_timeout(gpointer key, gpointer value, gpointer data)
     return 0;
 }
 
+/*
+ * Function iter ping
+ * used to iter over users and ping them to prevent timeout
+ */
 gboolean iter_ping(gpointer key, gpointer value, gpointer data)
 {
     if (data != NULL) { data = NULL; } //disable compile warnings
@@ -32,6 +40,10 @@ gboolean iter_ping(gpointer key, gpointer value, gpointer data)
     return 0;
 }
 
+/*
+ * Function iter connections
+ * used for iteration over gtree to check if user has something on the line buffer
+ */
 gboolean iter_connections(gpointer key, gpointer value, gpointer data)
 {
     if (key != NULL && value != NULL)
@@ -59,6 +71,10 @@ gboolean iter_connections(gpointer key, gpointer value, gpointer data)
     return 0;
 }
 
+/*
+ * Function iter add to fd set
+ * used for iteration over gtree to add to the fd set for connection with select
+ */
 gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data)
 {
     if (key != NULL && value != NULL)
@@ -75,6 +91,10 @@ gboolean iter_add_to_fd_set(gpointer key, gpointer value, gpointer data)
     return 0;
 }
 
+/*
+ * Function iter users
+ * used for iteration over gtree to see if user has received  message to some channel he is a part of
+ */
 gboolean iter_users(gpointer key, gpointer value, gpointer data)
 {
     if (key != NULL && value != NULL)
@@ -150,6 +170,10 @@ gboolean iter_users(gpointer key, gpointer value, gpointer data)
     return 0;
 }
 
+/*
+ * Function iter rooms
+ * used for iteration over gtree of all the rooms to make a list of all the rooms available 
+ */
 gboolean iter_rooms(gpointer key, gpointer value, gpointer data)
 {
     if (key != NULL && value != NULL)
@@ -169,6 +193,10 @@ gboolean iter_rooms(gpointer key, gpointer value, gpointer data)
     return 0;
 }
 
+/*
+ * Function iter user privmsg
+ * used for iteration over gtree to check if user exists to get the private message
+ */
 gboolean iter_users_privmsg(gpointer key, gpointer value, gpointer data)
 {
     if (key != NULL && value != NULL)
@@ -188,6 +216,10 @@ gboolean iter_users_privmsg(gpointer key, gpointer value, gpointer data)
     return 0;
 }
 
+/*
+ * Function iter users find
+ * used for iteration over gtree to check if user is existing
+ */
 gboolean iter_users_find(gpointer key, gpointer value, gpointer data)
 {
     if (key != NULL && value != NULL)

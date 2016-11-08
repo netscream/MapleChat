@@ -4,7 +4,7 @@
 #include "user.h"
 #include "game.h"
 
-
+/* All function comments are in c file */
 void command_user(gchar** command, struct userInformation* user, gchar* data);
 void command_list(struct userInformation* user);
 void command_join(gchar** command, struct userInformation* user);

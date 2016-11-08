@@ -1,5 +1,8 @@
 #include "client.h"
-
+/*
+ * Function run client 
+ * Used to run the client
+ */
 int run_client(const char* server_ip, const int port_num)
 {
     debug_s("Run client");
@@ -206,6 +209,10 @@ void connect_to_server(const char* server, const int port_num)
 
 }
 
+/*
+ * Function reconnect
+ * used in command line of client to reconnect on disconnection
+ */
 void reconnect()
 {
     int sslErr = -1;
@@ -262,6 +269,10 @@ void signal_handler(int signum)
     errno = _errno;
 }
 
+/*
+ * Function initialize exitfd
+ * Used to initilaize exit array and signal handling
+ */
 void initialize_exitfd(void)
 {
     /* Establish the self pipe for signal handling. */
@@ -602,6 +613,10 @@ void readline_callback(char *line)
     rl_set_prompt(prompt);
 }
 
+/*
+ * Function used for openssl initialization
+ * this is used to initialize openssl certification
+ */
 void initialize_openSSL_cert()
 {
     debug_s("Initialize openssl");
@@ -639,6 +654,10 @@ void initialize_openSSL_cert()
      */
 }
 
+/*
+ * Function initialize
+ * used to initialize all variables
+ */
 void initialize_vars()
 {
     server_fd = -1;

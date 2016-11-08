@@ -1,6 +1,7 @@
 #ifndef AUTHENTICATION_H
 #define AUTHENTICATION_H
 #include "server.h"
+/* All function comments are in c file */
 
 gchar* generate_salt();
 gchar* user_get_salt(gchar* username);

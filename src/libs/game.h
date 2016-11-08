@@ -6,6 +6,7 @@
 #include <glib.h>
 #include "debugging.h"
 #include "structures.h"
+/* All function comments are in c file */
 
 int ROLL_DICE();
 

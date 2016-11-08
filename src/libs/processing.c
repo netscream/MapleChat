@@ -1,5 +1,9 @@
 #include "processing.h"
 
+/*
+ * Function command user
+ * used for doing user logging processing
+ */
 void command_user(gchar** command, struct userInformation* user, gchar* data)
 {
     gchar* log_message = NULL;;
@@ -43,6 +47,10 @@ void command_user(gchar** command, struct userInformation* user, gchar* data)
     }
 }
 
+/*
+ * Function command list
+ * used for processing the list command
+ */
 void command_list(struct userInformation* user)
 {
     debug_s("User requested list of chat rooms\n");
@@ -58,6 +66,10 @@ void command_list(struct userInformation* user)
     g_free(list_of_chans);
 }
 
+/*
+ * Function command join
+ * used for processing the join command
+ */
 void command_join(gchar** command, struct userInformation* user)
 {
     debug_s("user wants to join ");
@@ -104,6 +116,10 @@ void command_join(gchar** command, struct userInformation* user)
     SSL_write(user->sslFd, " ", 1);
 }
 
+/*
+ * Function command who
+ * used for who command processing
+ */
 void command_who(struct userInformation* user)
 {
     debug_s("User requested list of users\n");
@@ -120,6 +136,10 @@ void command_who(struct userInformation* user)
     g_free(list_of_users);
 }
 
+/*
+ * Function command private message
+ * used for private message processing
+ */
 void command_private_message(gchar** command, struct userInformation* user, gchar* data)
 {
     debug_s("User sending private message\n");
@@ -130,6 +150,10 @@ void command_private_message(gchar** command, struct userInformation* user, gcha
     g_tree_foreach(usersOnServerList, (GTraverseFunc) iter_users_privmsg, (gpointer) &tmp);
 }
 
+/*
+ * Function command send message
+ * used for processing messages to a channel
+ */
 void channel_send_message(struct userInformation* user, gchar* data)
 {
     debug_s("User sending message to channel\n");
@@ -158,6 +182,10 @@ void channel_send_message(struct userInformation* user, gchar* data)
     }
 }
 
+/*
+ * Function command play
+ * used for processing the play command from user
+ */
 void command_play(struct userInformation* user, gchar* data)
 {
     struct find_user tmp;
@@ -186,6 +214,10 @@ void command_play(struct userInformation* user, gchar* data)
     }
 }
 
+/*
+ * Function command accept
+ * used to process accept for game play from user
+ */
 void command_accept(struct userInformation* user)
 {
     if (user->the_game == NULL)
@@ -198,6 +230,10 @@ void command_accept(struct userInformation* user)
     }
 }
 
+/*
+ * Function command reject
+ * used to process reject command from user
+ */
 void command_reject(struct userInformation* user)
 {
     if (user->the_game == NULL)
@@ -210,11 +246,19 @@ void command_reject(struct userInformation* user)
     }
 }
 
+/*
+ * Function command roll
+ * used for process roll command from user
+ */
 void command_roll(struct userInformation* user)
 {
     roll_dice(user->the_game);
 }
 
+/*
+ * Function process message
+ * used for deciding which command to call from user message
+ */
 void process_message(char* message, struct userInformation* user)
 {
     gchar** msg = g_strsplit(message, ":", 0);

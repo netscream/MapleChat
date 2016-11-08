@@ -1,5 +1,8 @@
 #include "game.h"
-
+/*
+ * Function play game
+ * used to play a game against other users
+ */
 void play_game(struct game* new_game, struct userInformation* user1, struct userInformation* user2)
 {
     gchar* tmp = NULL;
@@ -38,6 +41,10 @@ void play_game(struct game* new_game, struct userInformation* user1, struct user
 
 }
 
+/*
+ * Function roll dice
+ * used to roll the dice for the players of the game
+ */
 void roll_dice(struct game* new_game)
 {
     if (new_game != NULL)
@@ -78,6 +85,10 @@ void roll_dice(struct game* new_game)
     }
 }
 
+/*
+ * Function accept play
+ * used to accept game play from other players
+ */
 void accept_play(struct game* new_game)
 {
     gchar* tmp = g_strconcat("Player ", new_game->player2->nickname, " has accepted your challenge", NULL);
@@ -86,6 +97,10 @@ void accept_play(struct game* new_game)
     new_game->acceptance = 1;
 }
 
+/*
+ * Function reject play
+ * used to reject a play from other users
+ */
 void reject_play(struct game* new_game)
 {
     if (new_game != NULL)
@@ -97,11 +112,19 @@ void reject_play(struct game* new_game)
     }
 }
 
+/*
+ * Function stop play
+ * used to stop playing a game if the other user has not accepted or rejected
+ */
 void stop_play(struct game* new_game)
 {
     reject_play(new_game);
 }
 
+/*
+ * Function roll dice
+ * used to roll the dice for each user
+ */
 int ROLL_DICE()
 {
     return (int) floor(drand48() * 6.0) + 1;

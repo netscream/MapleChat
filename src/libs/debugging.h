@@ -7,6 +7,7 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 #include "server.h"
+/* All function comments are in c file */
 
 /*
  * Change this value to 1 (or something other than 0) to get debug function to work for tftp server

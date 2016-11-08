@@ -4,6 +4,7 @@
 #include <netinet/in.h> //for sockaddr_in
 #include <arpa/inet.h> //for inet_ntop
 #include "debugging.h"
+/* All function comments are in c file */
 
 void print_to_output(char* message, int length);
 void print_to_output_send_header(char* header, int oneIfFromClient, struct sockaddr_in clientAddr);

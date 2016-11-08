@@ -56,6 +56,7 @@ char *chat_room;
  * input. It is good style to indicate the name of the user and the
  * chat room he is in as part of the prompt. */
 char *prompt;
+/* All function comments are in c file */
 
 int run_client(const char* server_ip, const int port_num);
 void connect_to_server(const char* server, const int port_num);

@@ -39,6 +39,7 @@ GTree *usersOnServerList;
 /* KeyFile to store passwords */
 GKeyFile *keyfile;
 
+/* All function comments are in c file */
 int run_server(int port_num);
 struct sockaddr_in server_struct_init(const int port_num);
 int initalize_server(struct sockaddr_in server);

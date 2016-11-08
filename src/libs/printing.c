@@ -109,6 +109,10 @@ void log_to_console(struct sockaddr_in *client_addr, char *connection_state)
     return;
 }
 
+/*
+ * Function pring ssl error
+ * used for printing out the ssl error
+ */
 void print_SSL_error(int err)
 {
     switch (err)
