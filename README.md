@@ -49,7 +49,8 @@ client every two iterations (every minute), if the client doesn't respond with a
 within 30 seconds we assume it's idle and disconnect the user.
 
 ###client.c (client.h)
-Explain briefly what this file contains
+This is our code for the client. It has all of the commands requested in the handout. When
+it recieves a `ping` from the server it sends a `pong` bac.
 
 ###printing.c (printing.h)
 Responsible for all printing to the console.
@@ -86,10 +87,12 @@ Contains all the structs required for the application. We have structs for user 
 room information, communication messages, games and more.
 
 ###iterators.c (iterators.h)
-Explain briefly what this file contains
+Here we store our iterators which are used to iterate through all users, connections or chat rooms.
 
 ###game.c (game.h)
-Explain briefly what this file contains
+Our game is defined in here. You can play it by running `/game <username>`, the challenged user will
+then need to either `/accept` or `/decline` the game. When a game has started you can `/roll` and see
+which user won.
 
 ###authentication.c (authentication.h)
 Functionality which relates to hashing passwords, storing and retrieving said hashes and generating
