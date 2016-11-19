@@ -4,6 +4,8 @@ MapleChat
 ##About
 A secure chat server written in C using OpenSSL. The server is heavily based on IRC.
 
+This chat server is a part of project within Computer networks course at Reykjavik University.
+
 ##Usage
 ###Server
 To run the server execute
